@@ -107,19 +107,20 @@ jobs:
         hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
         hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
         hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
-        mkdir -p /opt/hwgui/include /opt/hwgui/lib/linux/gcc
-        cp -r include /opt/hwgui/
-        cp lib/*.a /opt/hwgui/lib/linux/gcc/
+        # 修复：添加 sudo 赋予写入 /opt 权限
+        sudo mkdir -p /opt/hwgui/include /opt/hwgui/lib/linux/gcc
+        sudo cp -r include /opt/hwgui/
+        sudo cp lib/*.a /opt/hwgui/lib/linux/gcc/
 
         # === Windows 交叉编译版（关键！解决你之前缺少的部分）===
-        export HB_PLATFORM=win
-        export HB_COMPILER=mingw64
-        hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
-        hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
-        hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
-        hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
-        mkdir -p /opt/hwgui/lib/win/mingw64
-        cp lib/*.a /opt/hwgui/lib/win/mingw64/
+        # 修复：将环境变量和编译命令放在同一行，确保生效
+        HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
+        HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
+        HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
+        HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
+        # 修复：添加 sudo 赋予写入 /opt 权限
+        sudo mkdir -p /opt/hwgui/lib/win/mingw64
+        sudo cp lib/*.a /opt/hwgui/lib/win/mingw64/
     # =================================================================================
 
     # ====================== 你指定的构建命令（已按要求修改） ======================
@@ -195,16 +196,17 @@ jobs:
         WINDOWS_SIZE=$(ls -lh "$WINDOWS_PKG" | awk '{print $5}')
         SOURCE_SIZE=$(ls -lh "$SOURCE_PKG" | awk '{print $5}')
 
+        # 修复：移除反斜杠，正确引用 GitHub 环境变量
         cat > release-body.md << EOF
-        ## 中国象棋 GUI v\${GITHUB_REF_NAME}
+        ## 中国象棋 GUI v${GITHUB_REF_NAME}
 
         ### 下载链接
 
         | 平台         | 文件                          | 大小     |
         |--------------|-------------------------------|----------|
-        | Linux x86_64 | \$LINUX_PKG                   | \$LINUX_SIZE |
-        | Windows x86_64 | \$WINDOWS_PKG               | \$WINDOWS_SIZE |
-        | 源代码       | \$SOURCE_PKG                  | \$SOURCE_SIZE |
+        | Linux x86_64 | $LINUX_PKG                   | $LINUX_SIZE |
+        | Windows x86_64 | $WINDOWS_PKG               | $WINDOWS_SIZE |
+        | 源代码       | $SOURCE_PKG                  | $SOURCE_SIZE |
 
         ### 安装说明
 
@@ -238,7 +240,7 @@ jobs:
         - ElephantEye：LGPL v2.1
 
         ### 更新日志
-        详见 [RELEASE_NOTES.md](https://github.com/\${GITHUB_REPOSITORY}/blob/main/RELEASE_NOTES.md)
+        详见 [RELEASE_NOTES.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/RELEASE_NOTES.md)
         EOF
 
     - name: 创建 GitHub Release 并上传文件
@@ -253,4 +255,4 @@ jobs:
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    # =================================================================================
+
