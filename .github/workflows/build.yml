@@ -14,8 +14,10 @@ jobs:
     - name: Build all versions
       run: |
         pwd
-        ls *
-        ls *.sh
+        ls 
+        tree
+        dir
+        cd ..
         chmod +x build.sh
         ./build.sh all
       timeout-minutes: 30
