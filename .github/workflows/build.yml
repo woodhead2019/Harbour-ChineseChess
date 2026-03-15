@@ -6,253 +6,244 @@ on:
       - 'v*'
   workflow_dispatch:
 
-# 授予 release 权限（必须加，否则 softprops/action-gh-release 会失败）
 permissions:
   contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout 本仓库代码
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
+      - name: Checkout 本仓库代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-    - name: 安装系统依赖（gcc、mingw、gtk 等）
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          gcc make build-essential libgtk2.0-dev \
-          git mingw-w64 g++-mingw-w64-x86-64
+      - name: 安装系统依赖（gcc、mingw、gtk 等）
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc make build-essential libgtk2.0-dev \
+            git mingw-w64 g++-mingw-w64-x86-64
 
-    # ====================== Harbour 最新 commit（用于缓存 key） ======================
-    - name: 获取 Harbour 最新 commit（缓存专用）
-      id: harbour-commit
-      run: echo "commit=$(git ls-remote https://github.com/harbour/core.git HEAD | cut -f1)" >> $GITHUB_OUTPUT
+      # ====================== Harbour 最新 commit（用于缓存 key） ======================
+      - name: 获取 Harbour 最新 commit（缓存专用）
+        id: harbour-commit
+        run: echo "commit=$(git ls-remote https://github.com/harbour/core.git HEAD | cut -f1)" >> $GITHUB_OUTPUT
 
-    - name: 获取 HwGUI 最新 commit（缓存专用）
-      id: hwgui-commit
-      run: echo "commit=$(git ls-remote https://github.com/JoseQuintas/hwgui_fork.git HEAD | cut -f1)" >> $GITHUB_OUTPUT
-    # =================================================================================
+      - name: 获取 HwGUI 最新 commit（缓存专用）
+        id: hwgui-commit
+        run: echo "commit=$(git ls-remote https://github.com/JoseQuintas/hwgui_fork.git HEAD | cut -f1)" >> $GITHUB_OUTPUT
+      # =================================================================================
 
-    # ====================== Harbour Linux 原生编译 + 缓存 ======================
-    - name: Cache Harbour Linux
-      id: cache-harbour-linux
-      uses: actions/cache@v4
-      with:
-        path: /opt/harbour
-        key: harbour-linux-${{ steps.harbour-commit.outputs.commit }}-${{ runner.os }}
+      # ====================== Harbour Linux 原生编译 + 缓存 ======================
+      - name: Cache Harbour Linux
+        id: cache-harbour-linux
+        uses: actions/cache@v4
+        with:
+          path: /opt/harbour
+          key: harbour-linux-${{ steps.harbour-commit.outputs.commit }}-${{ runner.os }}
 
-    - name: 编译 Harbour Linux（缓存未命中时执行）
-      if: steps.cache-harbour-linux.outputs.cache-hit != 'true'
-      env:
-        HB_COMPILER: gcc
-      run: |
-        git clone https://github.com/harbour/core /tmp/harbour-linux --depth 1
-        cd /tmp/harbour-linux
-        export HB_USER_CFLAGS="-fPIC"
-        export HB_BUILD_CONTRIBS=""
-        export HB_WITH_PCRE=local
-        export HB_INSTALL_PREFIX=/opt/harbour
-        make -j$(nproc)
-        sudo mkdir -p /opt/harbour
-        sudo make install
+      - name: 编译 Harbour Linux（缓存未命中时执行）
+        if: steps.cache-harbour-linux.outputs.cache-hit != 'true'
+        env:
+          HB_COMPILER: gcc
+        run: |
+          git clone https://github.com/harbour/core /tmp/harbour-linux --depth 1
+          cd /tmp/harbour-linux
+          export HB_USER_CFLAGS="-fPIC"
+          export HB_BUILD_CONTRIBS=""
+          export HB_WITH_PCRE=local
+          export HB_INSTALL_PREFIX=/opt/harbour
+          make -j$(nproc)
+          sudo mkdir -p /opt/harbour
+          sudo make install
 
-    - name: 把 Harbour Linux 添加到 PATH（hbmk2 能直接调用）
-      run: echo "/opt/harbour/bin" >> $GITHUB_PATH
-    # =================================================================================
+      - name: 把 Harbour Linux 添加到 PATH（hbmk2 能直接调用）
+        run: echo "/opt/harbour/bin" >> $GITHUB_PATH
+      # =================================================================================
 
-    # ====================== Harbour Windows 交叉编译 + 缓存 ======================
-    - name: Cache Harbour Windows (mingw64)
-      id: cache-harbour-win
-      uses: actions/cache@v4
-      with:
-        path: /opt/harbour-win
-        key: harbour-win-${{ steps.harbour-commit.outputs.commit }}-${{ runner.os }}
+      # ====================== Harbour Windows 交叉编译 + 缓存 ======================
+      - name: Cache Harbour Windows (mingw64)
+        id: cache-harbour-win
+        uses: actions/cache@v4
+        with:
+          path: /opt/harbour-win
+          key: harbour-win-${{ steps.harbour-commit.outputs.commit }}-${{ runner.os }}
 
-    - name: 编译 Harbour Windows 交叉版（缓存未命中时执行）
-      if: steps.cache-harbour-win.outputs.cache-hit != 'true'
-      run: |
-        git clone https://github.com/harbour/core /tmp/harbour-win --depth 1
-        cd /tmp/harbour-win
-        export HB_PLATFORM=win
-        export HB_COMPILER=mingw64
-        export HB_USER_CFLAGS="-fPIC"
-        export HB_BUILD_CONTRIBS=""
-        export HB_WITH_PCRE=local
-        export HB_INSTALL_PREFIX=/opt/harbour-win
-        make -j$(nproc)
-        sudo mkdir -p /opt/harbour-win
-        sudo make install
-    # =================================================================================
+      - name: 编译 Harbour Windows 交叉版（缓存未命中时执行）
+        if: steps.cache-harbour-win.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/harbour/core /tmp/harbour-win --depth 1
+          cd /tmp/harbour-win
+          export HB_PLATFORM=win
+          export HB_COMPILER=mingw64
+          export HB_USER_CFLAGS="-fPIC"
+          export HB_BUILD_CONTRIBS=""
+          export HB_WITH_PCRE=local
+          export HB_INSTALL_PREFIX=/opt/harbour-win
+          make -j$(nproc)
+          sudo mkdir -p /opt/harbour-win
+          sudo make install
+      # =================================================================================
 
-    # ====================== HwGUI Linux + Windows 交叉编译 + 缓存 ======================
-    - name: Cache HwGUI（Linux + Windows 合并缓存）
-      id: cache-hwgui
-      uses: actions/cache@v4
-      with:
-        path: /opt/hwgui
-        key: hwgui-${{ steps.hwgui-commit.outputs.commit }}-${{ steps.harbour-commit.outputs.commit }}-${{ runner.os }}
+      # ====================== HwGUI Linux + Windows 交叉编译 + 缓存 ======================
+      - name: Cache HwGUI（Linux + Windows 合并缓存）
+        id: cache-hwgui
+        uses: actions/cache@v4
+        with:
+          path: /opt/hwgui
+          key: hwgui-${{ steps.hwgui-commit.outputs.commit }}-${{ steps.harbour-commit.outputs.commit }}-${{ runner.os }}
 
-    - name: 编译 HwGUI Linux + Windows（缓存未命中时执行）
-      if: steps.cache-hwgui.outputs.cache-hit != 'true'
-      run: |
-        git clone https://github.com/JoseQuintas/hwgui_fork /tmp/hwgui --depth 1
-        cd /tmp/hwgui
+      - name: 编译 HwGUI Linux + Windows（缓存未命中时执行）
+        if: steps.cache-hwgui.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/JoseQuintas/hwgui_fork /tmp/hwgui --depth 1
+          cd /tmp/hwgui
 
-        # === Linux 版 ===
-        hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
-        hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
-        hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
-        hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
-        # 修复：添加 sudo 赋予写入 /opt 权限
-        sudo mkdir -p /opt/hwgui/include /opt/hwgui/lib/linux/gcc
-        sudo cp -r include /opt/hwgui/
-        sudo cp lib/*.a /opt/hwgui/lib/linux/gcc/
+          # === Linux 版 ===
+          hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
+          hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
+          hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
+          hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
+          sudo mkdir -p /opt/hwgui/include /opt/hwgui/lib/linux/gcc
+          sudo cp -r include /opt/hwgui/
+          sudo cp lib/*.a /opt/hwgui/lib/linux/gcc/
 
-        # === Windows 交叉编译版（关键！解决你之前缺少的部分）===
-        # 修复：将环境变量和编译命令放在同一行，确保生效
-        HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
-        HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
-        HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
-        HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
-        # 修复：添加 sudo 赋予写入 /opt 权限
-        sudo mkdir -p /opt/hwgui/lib/win/mingw64
-        sudo cp lib/*.a /opt/hwgui/lib/win/mingw64/
-    # =================================================================================
+          # === Windows 交叉编译版 ===
+          HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
+          HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
+          HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
+          HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
+          sudo mkdir -p /opt/hwgui/lib/win/mingw64
+          sudo cp lib/*.a /opt/hwgui/lib/win/mingw64/
+      # =================================================================================
 
-    # ====================== 你指定的构建命令（已按要求修改） ======================
-    - name: Build GUI (Linux + Windows) —— 使用你指定的 clone + build.sh
-      run: |
-        git clone https://github.com/woodhead2019/Harbour-ChineseChess.git /tmp/cchess --depth 1
-        cd /tmp/cchess
-        pwd
-        chmod +x build.sh
-        ./build.sh gui linux
-        ./build.sh gui windows
-      timeout-minutes: 30
-    # =================================================================================
+      # ====================== 构建 GUI 程序 ======================
+      - name: Build GUI (Linux + Windows)
+        run: |
+          git clone https://github.com/woodhead2019/Harbour-ChineseChess.git /tmp/cchess --depth 1
+          cd /tmp/cchess
+          pwd
+          chmod +x build.sh
+          ./build.sh gui linux
+          ./build.sh gui windows
+        timeout-minutes: 30
 
-    - name: 生成发布包（package.sh）
-      run: |
-        cd /tmp/cchess
-        chmod +x package.sh
-        ./package.sh all
-      timeout-minutes: 10
+      - name: 生成发布包（package.sh）
+        run: |
+          cd /tmp/cchess
+          chmod +x package.sh
+          ./package.sh all
+        timeout-minutes: 10
 
-    - name: 查看生成的包文件
-      run: |
-        cd /tmp/cchess
-        ls -lh cchess-*-linux-x86_64.tar.gz cchess-*-windows-x86_64.zip cchess-*-source.tar.gz 2>/dev/null || echo "No packages found"
+      - name: 查看生成的包文件
+        run: |
+          cd /tmp/cchess
+          ls -lh cchess-*-linux-x86_64.tar.gz cchess-*-windows-x86_64.zip cchess-*-source.tar.gz 2>/dev/null || echo "No packages found"
 
-    # ====================== 上传 artifact（供 release job 使用） ======================
-    - name: Upload Linux package
-      uses: actions/upload-artifact@v4
-      with:
-        name: linux-package
-        path: /tmp/cchess/cchess-*-linux-x86_64.tar.gz
-        retention-days: 30
+      # ====================== 上传 artifact ======================
+      - name: Upload Linux package
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-package
+          path: /tmp/cchess/cchess-*-linux-x86_64.tar.gz
+          retention-days: 30
 
-    - name: Upload Windows package
-      uses: actions/upload-artifact@v4
-      with:
-        name: windows-package
-        path: /tmp/cchess/cchess-*-windows-x86_64.zip
-        retention-days: 30
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: /tmp/cchess/cchess-*-windows-x86_64.zip
+          retention-days: 30
 
-    - name: Upload Source package
-      uses: actions/upload-artifact@v4
-      with:
-        name: source-package
-        path: /tmp/cchess/cchess-*-source.tar.gz
-        retention-days: 30
-    # =================================================================================
+      - name: Upload Source package
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-package
+          path: /tmp/cchess/cchess-*-source.tar.gz
+          retention-days: 30
 
-  # ====================== Release Job（仅 tag 触发时执行） ======================
+  # ====================== Release Job ======================
   release:
     needs: build
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-
     steps:
-    - name: Checkout 本仓库代码（用于 release）
-      uses: actions/checkout@v4
+      - name: Checkout 本仓库代码（用于 release）
+        uses: actions/checkout@v4
 
-    - name: 下载所有 artifact（合并到当前目录）
-      uses: actions/download-artifact@v4
-      with:
-        pattern: *-package
-        merge-multiple: true
+      - name: 下载所有 artifact（合并到当前目录）
+        uses: actions/download-artifact@v4
+        with:
+          pattern: *-package
+          merge-multiple: true
 
-    - name: 生成 Release 说明（自动填充真实文件名和大小）
-      run: |
-        LINUX_PKG=$(ls cchess-*-linux-x86_64.tar.gz | head -n1)
-        WINDOWS_PKG=$(ls cchess-*-windows-x86_64.zip | head -n1)
-        SOURCE_PKG=$(ls cchess-*-source.tar.gz | head -n1)
+      - name: 生成 Release 说明
+        run: |
+          LINUX_PKG=$(ls cchess-*-linux-x86_64.tar.gz | head -n1)
+          WINDOWS_PKG=$(ls cchess-*-windows-x86_64.zip | head -n1)
+          SOURCE_PKG=$(ls cchess-*-source.tar.gz | head -n1)
 
-        LINUX_SIZE=$(ls -lh "$LINUX_PKG" | awk '{print $5}')
-        WINDOWS_SIZE=$(ls -lh "$WINDOWS_PKG" | awk '{print $5}')
-        SOURCE_SIZE=$(ls -lh "$SOURCE_PKG" | awk '{print $5}')
+          LINUX_SIZE=$(ls -lh "$LINUX_PKG" | awk '{print $5}')
+          WINDOWS_SIZE=$(ls -lh "$WINDOWS_PKG" | awk '{print $5}')
+          SOURCE_SIZE=$(ls -lh "$SOURCE_PKG" | awk '{print $5}')
 
-        # 修复：移除反斜杠，正确引用 GitHub 环境变量
-        cat > release-body.md << EOF
-        ## 中国象棋 GUI v${GITHUB_REF_NAME}
+          cat > release-body.md << EOF
+          ## 中国象棋 GUI v${GITHUB_REF_NAME}
 
-        ### 下载链接
+          ### 下载链接
 
-        | 平台         | 文件                          | 大小     |
-        |--------------|-------------------------------|----------|
-        | Linux x86_64 | $LINUX_PKG                   | $LINUX_SIZE |
-        | Windows x86_64 | $WINDOWS_PKG               | $WINDOWS_SIZE |
-        | 源代码       | $SOURCE_PKG                  | $SOURCE_SIZE |
+          | 平台         | 文件                          | 大小     |
+          |--------------|-------------------------------|----------|
+          | Linux x86_64 | $LINUX_PKG                   | $LINUX_SIZE |
+          | Windows x86_64 | $WINDOWS_PKG               | $WINDOWS_SIZE |
+          | 源代码       | $SOURCE_PKG                  | $SOURCE_SIZE |
 
-        ### 安装说明
+          ### 安装说明
 
-        **Linux 用户:**
-        \`\`\`bash
-        tar -xzf cchess-*-linux-x86_64.tar.gz
-        cd cchess-*-linux-x86_64
-        ./xq
-        \`\`\`
+          **Linux 用户:**
+          \`\`\`bash
+          tar -xzf cchess-*-linux-x86_64.tar.gz
+          cd cchess-*-linux-x86_64
+          ./xq
+          \`\`\`
 
-        **Windows 用户:**
-        1. 解压 cchess-*-windows-x86_64.zip
-        2. 双击 xq.exe
+          **Windows 用户:**
+          1. 解压 cchess-*-windows-x86_64.zip
+          2. 双击 xq.exe
 
-        **源代码编译:**
-        \`\`\`bash
-        tar -xzf cchess-*-source.tar.gz
-        cd cchess-*
-        ./build.sh gui linux
-        ./build.sh gui windows
-        \`\`\`
+          **源代码编译:**
+          \`\`\`bash
+          tar -xzf cchess-*-source.tar.gz
+          cd cchess-*
+          ./build.sh gui linux
+          ./build.sh gui windows
+          \`\`\`
 
-        ### AI 引擎配置
-        **注意**：发布包不包含 AI 引擎，需要自行下载并放到 engines/ 目录。
+          ### AI 引擎配置
+          **注意**：发布包不包含 AI 引擎，需要自行下载并放到 engines/ 目录。
 
-        **ElephantEye**：https://www.xqbase.com/ → engines/eleeye/
-        **Pikafish**：https://github.com/official-pikafish/Pikafish → engines/pikafish/
+          **ElephantEye**：https://www.xqbase.com/ → engines/eleeye/
+          **Pikafish**：https://github.com/official-pikafish/Pikafish → engines/pikafish/
 
-        ### 许可证
-        - 主代码：CC0 1.0 Universal
-        - ElephantEye：LGPL v2.1
+          ### 许可证
+          - 主代码：CC0 1.0 Universal
+          - ElephantEye：LGPL v2.1
 
-        ### 更新日志
-        详见 [RELEASE_NOTES.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/RELEASE_NOTES.md)
-        EOF
+          ### 更新日志
+          详见 [RELEASE_NOTES.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/RELEASE_NOTES.md)
+          EOF
 
-    - name: 创建 GitHub Release 并上传文件
-      uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          cchess-*-linux-x86_64.tar.gz
-          cchess-*-windows-x86_64.zip
-          cchess-*-source.tar.gz
-        body_path: release-body.md
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 创建 GitHub Release 并上传文件
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            cchess-*-linux-x86_64.tar.gz
+            cchess-*-windows-x86_64.zip
+            cchess-*-source.tar.gz
+          body_path: release-body.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
