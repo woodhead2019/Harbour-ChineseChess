@@ -47,7 +47,8 @@ jobs:
          mkdir -p /opt/hwgui/lib/win/mingw64
          cd /tmp/hwgui
          cp -r include /opt/hwgui/
-         cp  *.a /opt/hwgui/lib/linux/gcc/
+         cp  lib/*.a /opt/hwgui/lib/linux/gcc/
+         ls /opt/hwgui
 
     - name: Install MinGW64 for Windows cross-compilation
       run: |
