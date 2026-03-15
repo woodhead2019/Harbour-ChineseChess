@@ -42,8 +42,6 @@ jobs:
          hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
          hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
          hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
-         cd /tmp/hwgui/samples
-         hbmk2 allhbp.hbp -workdir=/tmp -w3 -es2
          mkdir -p /opt/hwgui/include
          mkdir -p /opt/hwgui/lib/linux/gcc
          mkdir -p /opt/hwgui/lib/win/mingw64
