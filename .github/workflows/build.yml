@@ -11,15 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Build all versions
-      run: |
-        pwd
-        git clone https://github.com/woodhead2019/Harbour-ChineseChess.git /tmp/cchess --depth 1
-        cd /tmp/cchess
-        pwd
-        chmod +x build.sh
-        ./build.sh all
-
     - name: Compile Harbour
       env:
          HB_COMPILER: gcc
