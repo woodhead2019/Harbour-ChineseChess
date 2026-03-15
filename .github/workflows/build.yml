@@ -232,7 +232,7 @@ jobs:
 
           ### 更新日志
           详见 [RELEASE_NOTES.md](https://github.com/${GITHUB_REPOSITORY}/blob/main/RELEASE_NOTES.md)
-          EOF
+EOF
 
       - name: 创建 GitHub Release 并上传文件
         uses: softprops/action-gh-release@v2
