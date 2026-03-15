@@ -1,0 +1,56 @@
+# 编译产物
+*.o
+*.c
+*.h
+
+# hbmk2 自动生成的头文件
+hbmk_*.ch
+
+# 编译目录
+obj/
+
+# HwGUI 编译产物
+*.obj
+*.exe
+*.log
+
+# 项目可执行文件
+xq
+xq_con
+xq.exe
+xq_con.exe
+
+# 调试文件
+*.pdb
+
+# 日志目录
+logs/
+
+# 子模块
+engines/eleeye/
+engines/Pikafish/
+
+# Harbour 和 HwGUI 源代码
+harbour-source/
+hwgui-source/
+
+# HwGUI 目录
+hwgui/
+hwgui.hbc
+
+# 测试文件
+test_*.prg
+test_*.pgn
+test_*.hbp
+*_test_log*
+
+# 备份文件
+*.backup
+
+# 临时测试棋谱
+
+# 链接器映射文件
+*.map
+
+# 学习资料、编程教程
+How_to_Interface_Between_C_and_Harbour/

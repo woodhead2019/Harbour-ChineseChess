@@ -1,0 +1,61 @@
+#
+# xq_con.hbp - 中国象棋控制台版本构建配置
+#
+# 说明：路径配置在 build.sh 文件开头
+#
+
+# ==================== 输出配置 ====================
+-oxq_con
+
+# ==================== 源文件列表 ====================
+xiangqi.prg
+xq_funcs.prg
+xq_xiangqi.prg
+xq_engines.prg
+xq_config.prg
+xq_i18n.prg
+
+# ==================== 调试和输出选项 ====================
+# 显示执行的命令（详细输出）
+-trace
+
+# 显示信息性消息
+-info
+
+# 禁用静默模式
+-quiet-
+
+# 启用 C 编译器调试信息（包含符号表）
+-debug
+
+# 设置 C 编译器警告级别为最高
+-warn=max
+
+# 不优化代码（便于调试）
+-optim-
+
+# 不 stripping 二进制文件（保留调试符号）
+-strip-
+
+# 创建映射文件（仅 GCC 支持，Zig 不支持）
+# {allgcc}-map
+
+# ==================== 构建信息 ====================
+# 生成时间戳头文件（包含编译时间）
+-tshead=hbmk_build_info.ch
+
+# 生成版本控制信息头文件（包含 Git 信息）
+-vcshead=hbmk_vcs_info.ch
+
+# ==================== 构建命令示例 ====================
+# Linux 控制台版本：
+#   hbmk2 xq_con.hbp
+#
+# Windows 控制台版本（Mingw64 交叉编译）：
+#   hbmk2 -plat=win -comp=mingw64 xq_con.hbp
+#
+# 或使用构建脚本：
+#   ./build.sh console linux
+#   ./build.sh console windows
+
+# ==================== EOF of xq_con.hbp ====================

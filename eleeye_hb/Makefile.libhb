@@ -1,0 +1,125 @@
+# ========================================
+# Makefile.libhb - Linux 版本编译脚本
+# ========================================
+# 
+# ElephantEye 引擎版权声明:
+#   本 Makefile 用于编译包含 ElephantEye 引擎代码的静态库。
+#   ElephantEye 引擎大部分代码遵循 GNU Lesser General Public License v2.1 (LGPL v2.1)。
+#   重要例外：ucci.h/ucci.cpp 部分不在 LGPL 下发布，可以无限制使用。
+#   Copyright (C) 2004-2012 www.xqbase.com
+#   网站: https://www.xqbase.com/
+#   GitHub: https://github.com/xqbase/eleeye
+#
+# 平台: Linux (x86_64)
+# 编译器: g++ (GCC 14.2.0)
+# 输出格式: ELF (Linux 可执行文件格式)
+# 
+# 使用说明:
+#   make -f Makefile.libhb      # 编译 Linux 版本
+#   make -f Makefile.libhb clean  # 清理编译产物
+#
+# ========================================
+
+CC = g++
+AR = ar
+
+# 编译选项
+CFLAGS = -fPIC -I. \
+         -Ibase \
+         -Ieleeye \
+         -I/opt/harbour/include \
+         -fPIC \
+         -Wall \
+         -Wextra
+
+# 源文件路径
+PIPE_CPP = base/pipe.cpp
+
+# 对象文件目录
+OBJDIR = obj/linux
+
+# 目标文件
+OBJECTS = $(OBJDIR)/pipe.o $(OBJDIR)/ucci.o $(OBJDIR)/pregen.o $(OBJDIR)/position.o $(OBJDIR)/preeval.o $(OBJDIR)/genmoves.o $(OBJDIR)/movesort.o $(OBJDIR)/hash.o $(OBJDIR)/evaluate.o $(OBJDIR)/search.o $(OBJDIR)/book.o $(OBJDIR)/eleeye_hb.o
+TARGET = lib/linux/gcc/libeleeye.a
+
+# ========================================
+# 编译规则
+# ========================================
+
+all: $(TARGET)
+	@echo "========================================"
+	@echo "编译 Linux 版本静态库"
+	@echo "编译器: $(CC)"
+	@echo "========================================"
+
+$(OBJDIR)/pipe.o: $(PIPE_CPP)
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c $(PIPE_CPP) -o $@
+
+$(OBJDIR)/ucci.o: eleeye/ucci.cpp
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c eleeye/ucci.cpp -o $@
+
+$(OBJDIR)/pregen.o: eleeye/pregen.cpp
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c eleeye/pregen.cpp -o $@
+
+$(OBJDIR)/position.o: eleeye/position.cpp
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c eleeye/position.cpp -o $@
+
+$(OBJDIR)/preeval.o: eleeye/preeval.cpp
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c eleeye/preeval.cpp -o $@
+
+$(OBJDIR)/genmoves.o: eleeye/genmoves.cpp
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c eleeye/genmoves.cpp -o $@
+
+$(OBJDIR)/movesort.o: eleeye/movesort.cpp
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c eleeye/movesort.cpp -o $@
+
+$(OBJDIR)/hash.o: eleeye/hash.cpp
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c eleeye/hash.cpp -o $@
+
+$(OBJDIR)/evaluate.o: eleeye/evaluate.cpp
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c eleeye/evaluate.cpp -o $@
+
+$(OBJDIR)/search.o: eleeye/search.cpp
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c eleeye/search.cpp -o $@
+
+$(OBJDIR)/book.o: eleeye/book.cpp
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c eleeye/book.cpp -o $@
+
+$(OBJDIR)/eleeye_hb.o: eleeye/eleeye_hb.cpp
+	@mkdir -p $(OBJDIR)
+	$(CC) $(CFLAGS) -c eleeye/eleeye_hb.cpp -o $@
+
+$(TARGET): $(OBJECTS)
+	@mkdir -p lib/linux/gcc
+	$(AR) rcs $@ $(OBJECTS)
+	@echo "========================================"
+	@echo "Harbour 静态库 $(TARGET) 创建成功！"
+	@echo "========================================"
+	@ls -lh $(TARGET)
+	@echo "包含对象文件："
+	@ar t $(TARGET)
+
+clean:
+	rm -rf $(OBJDIR) $(TARGET)
+	@echo "========================================"
+	@echo "清理完成！"
+	@echo "========================================"
+
+list:
+	@echo "========================================"
+	@echo "静态库 $(TARGET) 内容："
+	@echo "========================================"
+	@ar t $(TARGET)
+
+.PHONY: all clean list

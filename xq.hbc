@@ -1,0 +1,33 @@
+# xq.hbc - 中国象棋 HwGUI 配置文件
+#
+# 路径配置：所有路径在 build.sh 文件开头
+# 如果路径不一致，请修改 build.sh 开头的配置区域
+#
+
+# ==================== 基础包含路径 ====================
+incpaths=/opt/hwgui/include
+
+# ==================== 基础库路径 ====================
+{unix}libpaths=/opt/hwgui/lib/linux/gcc:/home/woodhead/cchess/eleeye_hb/lib/linux/gcc
+{win}libpaths=/opt/hwgui/lib/win/mingw64:/home/woodhead/cchess/eleeye_hb/lib/win/mingw64
+
+# ==================== 必须的库 ====================
+{!hblib}libs=hwgui procmisc hbxml
+
+# ==================== Windows GDI+ 支持（图像加载） ====================
+{allmingw}libs=gdiplus
+
+# ==================== 基础编译选项 ====================
+PRGFLAGS=-m -n -es2
+
+# ==================== 平台特定的编译标志 ====================
+# Windows 平台：使用指针项
+{win}CFLAGS=-DHWG_USE_POINTER_ITEM
+
+# Linux 平台：使用指针项 + GTK+ 2.0
+{unix}CFLAGS=-DHWG_USE_POINTER_ITEM "`pkg-config --cflags gtk+-2.0`"
+
+# ==================== Linux GTK+ 链接选项 ====================
+{unix}ldflags+="`pkg-config --libs gtk+-2.0`"
+
+# ==================== EOF of xq.hbc ====================

@@ -1,0 +1,47 @@
+# run_tests.hbp
+# XQEngine 测试运行器构建配置
+#
+# 使用方法:
+#   cd xqengine/tests
+#   hbmk2 run_tests.hbp
+#   ./run_tests
+
+# 输出文件
+-orun_tests
+
+# 终端类型
+-gtstd
+
+# 包含路径 (父目录)
+-i..
+
+# 源文件 (按依赖顺序)
+../xqengine_constants.ch
+../xqengine_test.prg
+../xqengine_protocol.prg
+../xqengine_uci_protocol.prg
+../xqengine_ucci_protocol.prg
+../xqengine_engineconfig.prg
+../xqengine_enginestate.prg
+../xqengine_goparams.prg
+../xqengine_utils.prg
+../xqengine_errsys.prg
+../xqengine_debug.prg
+../xqengine_core.prg
+test_config.prg
+test_state.prg
+test_protocol.prg
+test_validation.prg
+test_core.prg
+test_integration.prg
+test_analyze.prg
+test_errsys.prg
+test_protocol_parse.prg
+test_core_search.prg
+test_async.prg
+test_nnue.prg
+test_edge_cases.prg
+run_tests.prg
+
+# 编译选项
+-debug

@@ -1,0 +1,50 @@
+# ========================================
+# test.win.hbp - ElephantEye 引擎测试程序（Windows 版本）
+# ========================================
+#
+# ElephantEye 引擎版权声明:
+#   本程序链接了 libeleeye.a 静态库，该库包含 ElephantEye 引擎代码。
+#   ElephantEye 引擎大部分代码遵循 GNU Lesser General Public License v2.1 (LGPL v2.1)。
+#   重要例外：ucci.h/ucci.cpp 部分不在 LGPL 下发布，可以无限制使用。
+#   Copyright (C) 2004-2012 www.xqbase.com
+#   网站: https://www.xqbase.com/
+#   GitHub: https://github.com/xqbase/eleeye
+#
+# 功能：使用 libeleeye.a 静态库编译测试程序
+# 编译命令：hbmk2 -plat=win -comp=mingw64 test.win.hbp
+#
+# 注意：Windows 版本编译可能需要使用 build.sh 脚本
+# 因为 ucrt64 编译器与 -mconsole 选项有兼容性问题
+#
+# ========================================
+
+# 输出文件名
+-otest
+
+# ========================================
+# 包含路径
+# ========================================
+-I.
+-Ibase
+-Ieleeye
+
+# ========================================
+# 库路径
+# ====================================
+{win}-L/home/woodhead/cchess/eleeye_hb/lib/win/mingw64
+
+# ========================================
+# 链接库
+# ========================================
+-leleeye
+-lstdc++
+-lpthread
+
+# ========================================
+# 源文件
+# ========================================
+test.prg
+
+# ========================================
+# EOF of test.win.hbp
+# ========================================

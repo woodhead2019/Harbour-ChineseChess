@@ -1,0 +1,40 @@
+# Created by freexbase using iFlow CLI
+#
+# This work is dedicated to the public domain.
+# To the extent possible under law, freexbase has waived all copyright
+# and related or neighboring rights to this work.
+#
+# SPDX-License-Identifier: CC0-1.0
+# https://creativecommons.org/publicdomain/zero/1.0/
+
+
+# XQEngine Demo - Chinese Chess Engine Demo Program
+# Harbour Build Project (.hbp)
+
+# Source files (按依赖顺序排列)
+# 核心引擎模块
+xqengine/xqengine_errsys.prg
+xqengine/xqengine_utils.prg
+xqengine/xqengine_engineconfig.prg
+xqengine/xqengine_goparams.prg
+xqengine/xqengine_enginestate.prg
+xqengine/xqengine_protocol.prg
+xqengine/xqengine_ucci_protocol.prg
+xqengine/xqengine_uci_protocol.prg
+xqengine/xqengine_core.prg
+
+# 演示程序
+demo.prg
+
+# Output
+-odemo
+
+# Build options
+-debug
+-optim
+-gtstd
+-w3
+
+# Generate build information headers
+-tshead=build_info.ch
+-vcshead=vcs_info.ch

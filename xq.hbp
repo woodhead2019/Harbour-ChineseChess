@@ -1,0 +1,186 @@
+#
+# xq.hbp - 中国象棋 GUI 版本构建配置
+#
+# 路径配置：所有路径在 build.sh 文件开头
+# 如果路径不一致，请修改 build.sh 开头的配置区域
+#
+
+# ==================== 输出配置 ====================
+-oxq
+
+# Windows UNICODE 模式（仅 Windows 平台生效）
+{win}-winuni
+
+# Windows GUI 应用程序（适用于所有 Windows 编译器）
+{win}-gui
+
+# ucrt64 编译器：使用 ldflag 覆盖 -mwindows 选项
+{win}-ldflag=-Wl,--subsystem,windows
+
+# ucrt64 编译器需要显式指定入口点
+{win}-ldflag=-Wl,--entry=mainCRTStartup
+
+# ==================== 路径配置 ====================
+# HwGUI 包含路径和库路径
+-I/opt/hwgui/include
+{unix}-L/opt/hwgui/lib/linux/gcc
+{win}-L/opt/hwgui/lib/win/mingw64
+
+# XQEngine 包含路径（用于 xqengine_constants.ch）
+-Ixqengine.prg/xqengine
+
+# ==================== 引用 HwGUI 配置 ====================
+xq.hbc
+
+# ==================== 源文件列表 ====================
+xiangqiw.prg
+xq_notation.prg
+xq_res.prg
+xq_resdata.prg
+xq_res_embedded.prg
+xq_funcs.prg
+xq_xiangqi.prg
+xq_engines.prg
+xq_ucci.prg
+xq_ai2.prg
+xq_eleeye.prg
+xq_config.prg
+xq_errsys.prg
+xq_log.prg
+xq_i18n.prg
+
+# ==================== xqengine 库源文件（不修改原代码） ====================
+# 按 xqengine/xqengine.hbp 中的依赖顺序排列
+# 注意：
+#   - xqengine_debug.prg: 调试模块，最先加载
+#   - xqengine_test.prg: 测试框架，不包含在生产构建中
+#   - xqengine_errsys.prg: 错误处理系统，已排除（项目已有 xq_errsys.prg）
+xqengine.prg/xqengine/xqengine_debug.prg
+xqengine.prg/xqengine/xqengine_utils.prg
+xqengine.prg/xqengine/xqengine_engineconfig.prg
+xqengine.prg/xqengine/xqengine_goparams.prg
+xqengine.prg/xqengine/xqengine_enginestate.prg
+xqengine.prg/xqengine/xqengine_protocol.prg
+xqengine.prg/xqengine/xqengine_ucci_protocol.prg
+xqengine.prg/xqengine/xqengine_uci_protocol.prg
+xqengine.prg/xqengine/xqengine_core.prg
+
+# ==================== 象眼引擎源文件 ====================
+# 注意：需要完整的项目结构（base/ 和 eleeye/ 目录）才能编译
+# 如果目录不存在，需要先下载象眼引擎源代码
+# eleeye_hb/base/pipe.cpp
+# eleeye_hb/eleeye/ucci.cpp
+# eleeye_hb/eleeye/pregen.cpp
+# eleeye_hb/eleeye/position.cpp
+# eleeye_hb/eleeye/preeval.cpp
+# eleeye_hb/eleeye/genmoves.cpp
+# eleeye_hb/eleeye/movesort.cpp
+# eleeye_hb/eleeye/hash.cpp
+# eleeye_hb/eleeye/evaluate.cpp
+# eleeye_hb/eleeye/search.cpp
+# eleeye_hb/eleeye/book.cpp
+# eleeye_hb/eleeye_hb.cpp
+
+# 象眼引擎库路径（临时使用，直到源文件可用）
+{unix}-L/home/woodhead/cchess/eleeye_hb/lib/linux/gcc
+{win}-L/home/woodhead/cchess/eleeye_hb/lib/win/mingw64
+
+# C++ 标准库
+{unix}-lstdc++
+{unix}-lsupc++
+{unix}-lpthread
+
+# Windows 特定链接器选项（必须在所有库之前）
+{win}-ldflag=-static
+{win}-ldflag=-Wl,--export-all-symbols
+{win}-ldflag=-Wl,--allow-multiple-definition
+
+# C++ 标准库（Windows）
+{win}-lstdc++
+{win}-lsupc++
+{win}-lpthread
+
+# 象眼引擎库（使用全路径，必须放在所有其他库之后）
+{unix}-leleeye
+{win}-ldflag=/home/woodhead/cchess/eleeye_hb/lib/win/mingw64/libeleeye.a
+
+# ==================== 调试和输出选项 ====================
+# 显示执行的命令（详细输出）
+-trace
+
+# 显示信息性消息
+-info
+
+# 禁用静默模式
+-quiet-
+
+# 启用 C 编译器调试信息（包含符号表）
+-debug
+
+# 设置 C 编译器警告级别为最高
+-warn=max
+
+# 不优化代码（便于调试）
+-optim-
+
+# 不 stripping 二进制文件（保留调试符号）
+-strip-
+
+# 创建映射文件（仅 Linux/GCC 支持，Windows MinGW64 可能导致编译错误）
+{unix}-map
+
+# ==================== 构建信息 ====================
+# 生成时间戳头文件（包含编译时间）
+-tshead=hbmk_build_info.ch
+
+# 生成版本控制信息头文件（包含 Git 信息）
+-vcshead=hbmk_vcs_info.ch
+
+# ==================== 编译选项 ====================
+# 添加 UNICODE 支持
+-prgflag=-DUNICODE
+
+# Windows 平台：添加 GDI+ 支持（用于图像加载）
+{win}-prgflag=-D__USE_GDIPLUS
+{win}-lgdiplus
+
+# Windows 交叉编译：添加 Harbour 库路径
+{win}-L/opt/harbour/lib/win/mingw64
+
+# ==================== 其他可选编译选项 ====================
+# 以下选项可以根据需要启用或禁用
+#
+# -static        静态链接
+# -std           控制台应用程序
+# -gui           GUI 应用程序
+# -incpath       添加包含路径
+# -libpath       添加库路径
+# -cflag         添加 C 编译器标志
+# -ldflag        添加链接器标志
+# -define        定义预处理器宏
+# -undef         取消预处理器宏
+# -output        指定输出文件名
+# -job           并行编译
+# -rebuild       强制重新编译
+
+# ==================== 构建命令示例 ====================
+# Linux GUI 版本：
+#   hbmk2 xq.hbp
+#
+# Linux 控制台版本：
+#   hbmk2 xq_con.hbp
+#
+# Windows GUI 版本（Mingw64 交叉编译）：
+#   hbmk2 -plat=win -comp=mingw64 xq.hbp
+#
+# Windows 控制台版本（Mingw64 交叉编译）：
+#   hbmk2 -plat=win -comp=mingw64 xq_con.hbp
+#
+# 或使用构建脚本：
+#   ./build.sh gui linux
+#   ./build.sh gui windows
+#   ./build.sh console linux
+#   ./build.sh console windows
+#   ./build.sh all
+
+# ==================== EOF of xq.hbp ====================

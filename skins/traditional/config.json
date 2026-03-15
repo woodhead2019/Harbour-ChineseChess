@@ -1,0 +1,1 @@
+{"width": 631, "height": 696, "size": 57, "offset": {"dx": 4, "dy": 3}, "transparent": 0, "boardScale": 0.8, "pieceScale": 0.8, "board": "board.jpg", "red": {"K": "rk.bmp", "A": "ra.bmp", "B": "rb.bmp", "C": "rc.bmp", "N": "rn.bmp", "R": "rr.bmp", "P": "rp.bmp"}, "black": {"k": "bk.bmp", "a": "ba.bmp", "b": "bb.bmp", "c": "bc.bmp", "n": "bn.bmp", "r": "br.bmp", "p": "bp.bmp"}}
