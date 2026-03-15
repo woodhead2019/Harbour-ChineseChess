@@ -1,0 +1,198 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout harbour/core repo
+      uses: actions/checkout@v4
+      with:
+        repository: harbour/core
+        path: /tmp/harbour      
+
+    - name: Compile harbour
+      run: |
+        cd
+        pwd
+        sudo apt-get update
+        sudo apt-get upgrade
+        sudo apt-get install gcc
+        sudo apt-get install make
+        sudo apt-get install build-essential libgtk2.0-dev --fix-missing
+        sudo apt-get install git
+        cd /tmp/harbour
+        export HB_USER_CFLAGS="-fPIC"
+        export HB_BUILD_CONTRIBS=""
+        export HB_WITH_PCRE=local
+        export HB_INSTALL_PREFIX=/opt/harbour
+        mkdir -p /opt/harbour
+        make -j$(nproc)
+        make install
+        cd
+      
+    - name: Checkout JoseQuintas/hwgui_fork repo
+      uses: actions/checkout@v4
+      with:
+        repository: JoseQuintas/hwgui_fork
+        path: hwgui
+
+    - name: Compile HwGUI
+      run: |
+        cd
+        cd /tmp/hwgui
+        pwd
+        hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
+        hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
+        hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
+        hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
+        cd /tmp/hwgui/samples
+        hbmk2 allhbp.hbp -workdir=/tmp -w3 -es2
+      timeout-minutes: 30
+
+    - name: Install MinGW64 for Windows cross-compilation
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mingw-w64 g++-mingw-w64-x86-64
+      timeout-minutes: 10
+      
+    - name: Build all versions
+      run: |
+        chmod +x build.sh
+        ./build.sh all
+      timeout-minutes: 30
+      
+    - name: Build release packages
+      run: |
+        chmod +x package.sh
+        ./package.sh all
+      timeout-minutes: 10
+      
+    - name: List build artifacts
+      run: |
+        ls -lh *.tar.gz *.zip 2>/dev/null || echo "No packages found"
+      
+    - name: Upload Linux package
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-package
+        path: cchess-*.tar.gz
+        retention-days: 30
+        
+    - name: Upload Windows package
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-package
+        path: cchess-*.zip
+        retention-days: 30
+        
+    - name: Upload Source package
+      uses: actions/upload-artifact@v4
+      with:
+        name: source-package
+        path: cchess-*-source.tar.gz
+        retention-days: 30
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download Linux package
+      uses: actions/download-artifact@v4
+      with:
+        name: linux-package
+        
+    - name: Download Windows package
+      uses: actions/download-artifact@v4
+      with:
+        name: windows-package
+        
+    - name: Download Source package
+      uses: actions/download-artifact@v4
+      with:
+        name: source-package
+        
+    - name: Display file sizes
+      run: |
+        echo "=== Linux Package ==="
+        ls -lh cchess-*.tar.gz
+        echo ""
+        echo "=== Windows Package ==="
+        ls -lh cchess-*.zip
+        echo ""
+        echo "=== Source Package ==="
+        ls -lh cchess-*-source.tar.gz
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          cchess-*.tar.gz
+          cchess-*.zip
+        body: |
+          ## 中国象棋 GUI v${{ github.ref_name }}
+          
+          ### 下载链接
+          
+          | 平台 | 文件 | 大小 |
+          |------|------|------|
+          | Linux x86_64 | cchess-*-linux-x86_64.tar.gz | - |
+          | Windows x86_64 | cchess-*-windows-x86_64.zip | - |
+          | 源代码 | cchess-*-source.tar.gz | - |
+          
+          ### 安装说明
+          
+          **Linux 用户:**
+          ```bash
+          tar -xzf cchess-*-linux-x86_64.tar.gz
+          cd cchess-*-linux-x86_64
+          ./xq
+          ```
+          
+          **Windows 用户:**
+          1. 解压 cchess-*-windows-x86_64.zip
+          2. 双击运行 xq.exe
+          
+          **源代码:**
+          ```bash
+          tar -xzf cchess-*-source.tar.gz
+          cd cchess-1.0.1
+          ./build.sh all
+          ```
+          
+          ### AI 引擎配置
+          
+          **注意**：发布包不包含 AI 引擎文件，需要自行下载配置。
+          
+          **ElephantEye 引擎:**
+          - 下载地址：https://www.xqbase.com/
+          - 放置位置：engines/eleeye/
+          
+          **Pikafish 引擎:**
+          - 下载地址：https://github.com/official-pikafish/Pikafish
+          - 放置位置：engines/pikafish/
+          
+          ### 许可证
+          
+          - 主代码：CC0 1.0 Universal (Public Domain)
+          - ElephantEye 引擎：LGPL v2.1
+          
+          ### 更新日志
+          
+          详见 [RELEASE_NOTES.md](https://github.com/${{ github.repository }}/blob/master/RELEASE_NOTES.md)
+          
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
