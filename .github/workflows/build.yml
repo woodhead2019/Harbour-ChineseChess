@@ -67,7 +67,8 @@ jobs:
         cd /tmp/cchess
         pwd
         chmod +x build.sh
-        ./build.sh all
+        ./build.sh gui linux
+        ./build.sh gui windows
       timeout-minutes: 30
       
     - name: Build release packages
