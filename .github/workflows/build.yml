@@ -77,8 +77,8 @@ jobs:
           cd /tmp/harbour-win
           export HB_PLATFORM=win
           export HB_COMPILER=mingw64
+          export HB_CCPATH=/usr/bin/
           export HB_CCPREFIX=x86_64-w64-mingw32-
-          export HB_CCPATH=/usr/bin
           export HB_USER_CFLAGS="-fPIC"
           export HB_BUILD_CONTRIBS=""
           export HB_WITH_PCRE=local
