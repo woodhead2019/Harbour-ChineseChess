@@ -77,6 +77,8 @@ jobs:
           cd /tmp/harbour-win
           export HB_PLATFORM=win
           export HB_COMPILER=mingw64
+          export HB_CCPREFIX=x86_64-w64-mingw32-
+          export HB_CCPATH=/usr/bin
           export HB_USER_CFLAGS="-fPIC"
           export HB_BUILD_CONTRIBS=""
           export HB_WITH_PCRE=local
@@ -110,10 +112,14 @@ jobs:
           sudo cp lib/*.a /opt/hwgui/lib/linux/gcc/
 
           # === Windows 交叉编译版 ===
-          HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
-          HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
-          HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
-          HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
+          #HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
+          #HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
+          #HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
+          #HB_PLATFORM=win HB_COMPILER=mingw64 hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
+           HB_PLATFORM=win HB_COMPILER=mingw64 HB_CCPREFIX=x86_64-w64-mingw32- HB_CCPATH=/usr/bin hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
+          HB_PLATFORM=win HB_COMPILER=mingw64 HB_CCPREFIX=x86_64-w64-mingw32- HB_CCPATH=/usr/bin hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
+          HB_PLATFORM=win HB_COMPILER=mingw64 HB_CCPREFIX=x86_64-w64-mingw32- HB_CCPATH=/usr/bin hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
+          HB_PLATFORM=win HB_COMPILER=mingw64 HB_CCPREFIX=x86_64-w64-mingw32- HB_CCPATH=/usr/bin hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
           sudo mkdir -p /opt/hwgui/lib/win/mingw64
           sudo cp lib/*.a /opt/hwgui/lib/win/mingw64/
       # =================================================================================
