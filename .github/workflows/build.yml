@@ -23,7 +23,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             gcc make build-essential libgtk2.0-dev \
-            git mingw-w64 g++-mingw-w64-x86-64
+            git mingw-w64 g++-mingw-w64-x86-64 \
+            mingw-w64-x86-64-dev
 
       # ====================== Harbour 最新 commit（用于缓存 key） ======================
       - name: 获取 Harbour 最新 commit（缓存专用）
