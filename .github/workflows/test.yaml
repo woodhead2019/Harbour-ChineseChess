@@ -1,0 +1,91 @@
+name: Environment Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检查系统信息
+        run: |
+          echo "=== 系统信息 ==="
+          uname -a
+          lsb_release -a
+          
+      - name: 安装基础依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential libgtk2.0-dev \
+            git mingw-w64
+          
+      - name: 检查 mingw-w64 安装情况
+        run: |
+          echo "=== 检查 mingw-w64 ==="
+          which x86_64-w64-mingw32-gcc
+          x86_64-w64-mingw32-gcc --version
+          x86_64-w64-mingw32-gcc -print-sysroot
+          
+      - name: 列出 mingw-w64 工具
+        run: |
+          echo "=== mingw-w64 工具位置 ==="
+          ls -la /usr/bin/x86_64-w64-mingw32-* | head -20
+          
+      - name: 检查 mingw 标准库
+        run: |
+          echo "=== 检查 mingw 标准库 ==="
+          find /usr -name "bits/libc-header-start.h" 2>/dev/null || echo "未找到 glibc 头文件"
+          find /usr -path "*mingw*" -name "stdio.h" 2>/dev/null || echo "未找到 mingw stdio.h"
+          
+      - name: 检查可用的 mingw 包
+        run: |
+          echo "=== 可用的 mingw-w64 包 ==="
+          apt-cache search mingw-w64 | grep -i "dev\|lib" | head -30
+          
+      - name: 尝试编译简单的 mingw 程序
+        run: |
+          echo "=== 尝试编译 mingw 程序 ==="
+          cat > test.c << 'EOF'
+          #include <stdio.h>
+          int main() {
+              printf("Hello from MinGW\n");
+              return 0;
+          }
+          EOF
+          
+          echo "编译命令："
+          x86_64-w64-mingw32-gcc test.c -o test.exe 2>&1 || true
+          
+      - name: 检查 Harbour 依赖
+        run: |
+          echo "=== 检查 Harbour 编译需求 ==="
+          echo "GCC 版本："
+          gcc --version
+          echo ""
+          echo "Make 版本："
+          make --version
+          
+      - name: 完整诊断信息汇总
+        run: |
+          echo "=== 完整诊断汇总 ==="
+          echo ""
+          echo "1. x86_64-w64-mingw32-gcc 位置:"
+          which x86_64-w64-mingw32-gcc || echo "NOT FOUND"
+          echo ""
+          echo "2. x86_64-w64-mingw32-gcc 版本:"
+          x86_64-w64-mingw32-gcc --version 2>&1 | head -1 || echo "ERROR"
+          echo ""
+          echo "3. mingw sysroot:"
+          x86_64-w64-mingw32-gcc -print-sysroot 2>&1 || echo "ERROR"
+          echo ""
+          echo "4. mingw include 路径:"
+          x86_64-w64-mingw32-gcc -E -v - < /dev/null 2>&1 | grep "include" || echo "ERROR"
+          echo ""
+          echo "5. 已安装的 mingw-w64 包:"
+          dpkg -l | grep mingw-w64 || echo "NO MINGW PACKAGES"
+          echo ""
+          echo "6. 系统标准库路径:"
+          ls -d /usr/include 2>/dev/null && echo "  /usr/include EXISTS"
+          ls -d /usr/lib/x86_64-linux-gnu 2>/dev/null && echo "  /usr/lib/x86_64-linux-gnu EXISTS"
+
