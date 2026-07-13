@@ -55,6 +55,7 @@ jobs:
           export HB_BUILD_CONTRIBS=""
           export HB_WITH_PCRE=local
           export HB_INSTALL_PREFIX=/opt/harbour
+          export HB_MT=yes                       #启用多线程支持
           make -j$(nproc)
           sudo mkdir -p /opt/harbour
           sudo make install
@@ -84,7 +85,7 @@ jobs:
           export HB_BUILD_CONTRIBS=""
           export HB_WITH_PCRE=local
           export HB_INSTALL_PREFIX=/opt/harbour-win
-          export HB_HOST_BIN=/opt/harbour/bin
+          #export HB_HOST_BIN=/opt/harbour/bin
           # 64位 Windows 交叉编译
           export HB_MT=yes                       #启用多线程支持
           export HB_PLATFORM=win
