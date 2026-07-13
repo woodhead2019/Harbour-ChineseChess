@@ -89,8 +89,7 @@ jobs:
           export HB_MT=yes                       #启用多线程支持
           export HB_PLATFORM=win
           export HB_COMPILER=mingw64
-          #export HB_CCPREFIX=x86_64-w64-mingw32-
-          export HB_CCPREFIX=x86_64-w64-mingw32ucrt-
+          export HB_CCPREFIX=x86_64-w64-mingw32-
           # 图像/压缩库
           export HB_WITH_ZLIB=local          # zlib库
           export HB_WITH_PCRE=local          # PCRE正则库
