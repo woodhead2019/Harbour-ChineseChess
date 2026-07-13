@@ -51,6 +51,7 @@ jobs:
         run: |
           git clone https://github.com/harbour/core /tmp/harbour-linux --depth 1
           cd /tmp/harbour-linux
+          sudo mkdir -p /opt/harbour
           export HB_USER_CFLAGS="-fPIC"
           export HB_BUILD_CONTRIBS=""
           export HB_WITH_PCRE=local
