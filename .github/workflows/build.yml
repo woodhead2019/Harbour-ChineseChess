@@ -101,6 +101,7 @@ jobs:
           export HB_WITH_CURSES=no
           export HB_WITH_SLANG=no
           export HB_WITH_X11=no
+          export HB_WITH_MYSQL=no
           
           #没编译过，先屏蔽
           export HB_WITH_OPENSSL=no
