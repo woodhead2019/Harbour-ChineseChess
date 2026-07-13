@@ -84,6 +84,30 @@ jobs:
           export HB_BUILD_CONTRIBS=""
           export HB_WITH_PCRE=local
           export HB_INSTALL_PREFIX=/opt/harbour-win
+          export HB_HOST_BIN=/opt/harbour/bin
+          # 64位 Windows 交叉编译
+          export HB_MT=yes                       #启用多线程支持
+          export HB_PLATFORM=win
+          export HB_COMPILER=mingw64
+          #export HB_CCPREFIX=x86_64-w64-mingw32-
+          export HB_CCPREFIX=x86_64-w64-mingw32ucrt-
+          # 图像/压缩库
+          export HB_WITH_ZLIB=local          # zlib库
+          export HB_WITH_PCRE=local          # PCRE正则库
+          export HB_WITH_PNG=local           # PNG图像库
+          export HB_WITH_JPEG=local          # JPEG图像库
+          
+          #编译不设这几个会报错
+          export HB_WITH_CURSES=no
+          export HB_WITH_SLANG=no
+          export HB_WITH_X11=no
+          
+          #没编译过，先屏蔽
+          export HB_WITH_OPENSSL=no
+          export HB_WITH_EXPAT=local
+          export HB_WITH_BZIP2=no
+          export HB_WITH_SQLITE3=no
+          
           make -j$(nproc)
           sudo mkdir -p /opt/harbour-win
           sudo make install
