@@ -25,7 +25,6 @@ jobs:
             gcc make build-essential libgtk2.0-dev \
             git mingw-w64 g++-mingw-w64-x86-64 \
             mingw-w64-x86-64-dev \
-            # 下面是为 Harbour 的可选模块和常见 dev 包添加（避免大量 Missing dependency 错误）
             zlib1g-dev libpng-dev libjpeg-dev libfreetype6-dev \
             libbz2-dev libexpat1-dev libcurl4-openssl-dev libgd-dev \
             libfreeimage-dev libmagic-dev unixodbc-dev ghostscript \
