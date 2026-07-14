@@ -7,8 +7,10 @@
 # ==================== 配置区域 - 根据你的环境修改这里 ====================
 
 # Harbour 编译器路径
-HBMK2="/opt/harbour/bin/hbmk2"
-HB_HOST_BIN="/opt/harbour/bin"
+#HBMK2="/opt/harbour/bin/hbmk2"
+HBMK2="/tmp/harbour-linux/bin/hbmk2"
+#HB_HOST_BIN="/opt/harbour/bin"
+HB_HOST_BIN="/tmp/harbour-linux/bin"
 
 # HwGUI 库路径（仅用于信息显示，实际路径在 xq.hbp 和 xq.hbc 中配置）
 HWGUI_INCLUDE_DIR="/opt/hwgui/include"
