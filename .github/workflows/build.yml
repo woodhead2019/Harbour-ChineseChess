@@ -25,7 +25,7 @@ jobs:
             build-essential gcc g++ make pkg-config \
             libgtk2.0-dev git \
             mingw-w64 binutils-mingw-w64 \
-            g++-mingw-w64-x86-64 x86_64-w64-mingw32-gcc \
+            g++-mingw-w64-x86-64  \
             gcc-multilib g++-multilib libc6-dev \
             zlib1g-dev libpng-dev libjpeg-dev libfreetype6-dev \
             libbz2-dev libexpat1-dev libcurl4-openssl-dev libgd-dev \
