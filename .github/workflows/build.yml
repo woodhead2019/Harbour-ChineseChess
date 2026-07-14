@@ -104,17 +104,17 @@ jobs:
           }
 
       - name: 把 Harbour Linux 添加到 PATH（hbmk2 能直接调用）
-        run: echo "/opt/harbour/bin" >> $GITHUB_PATH
+        run: echo "/tmp/harbour-linux/bin/linux/gcc" >> $GITHUB_PATH
 
       - name: 验证 Harbour 安装
         run: |
-          echo "列出 /opt/harbour/bin 内容："
-          ls -l /opt/harbour/bin || true
-          if [ -x /opt/harbour/bin/hbmk2 ]; then
-            /opt/harbour/bin/hbmk2 --version || true
-            echo "hbmk2 found at /opt/harbour/bin/hbmk2"
+          echo "列出 /tmp/harbour-linux/bin/linux 内容："
+          ls -l /tmp/harbour-linux/bin/linux/gcc/ || true
+          if [ -x /tmp/harbour-linux/bin/linux/gcc/hbmk2 ]; then
+            /tmp/harbour-linux/bin/linux/gcc/hbmk2 --version || true
+            echo "hbmk2 found at /tmp/harbour-linux/bin/linux/gcc/hbmk2"
           else
-            echo "ERROR: hbmk2 not found under /opt/harbour/bin"
+            echo "ERROR: hbmk2 not found under /tmp/harbour-linux/bin/linux/gcc"
             echo "当前 PATH=$PATH"
             ls -l /tmp/harbour-linux || true
             # 让 job 失败以暴露更多日志
