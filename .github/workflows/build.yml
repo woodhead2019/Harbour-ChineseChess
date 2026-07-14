@@ -21,16 +21,25 @@ jobs:
       - name: 安装系统依赖（gcc、mingw、gtk 等）
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            gcc make build-essential libgtk2.0-dev \
-            git mingw-w64 g++-mingw-w64-x86-64 \
-            mingw-w64-x86-64-dev \
+          sudo apt-get install -y --no-install-recommends \
+            build-essential gcc g++ make pkg-config \
+            libgtk2.0-dev git \
+            mingw-w64 binutils-mingw-w64 \
+            g++-mingw-w64-x86-64 x86_64-w64-mingw32-gcc \
+            gcc-multilib g++-multilib libc6-dev \
             zlib1g-dev libpng-dev libjpeg-dev libfreetype6-dev \
             libbz2-dev libexpat1-dev libcurl4-openssl-dev libgd-dev \
             libfreeimage-dev libmagic-dev unixodbc-dev ghostscript \
             libcups2-dev libssl-dev
+          # 显示关键版本信息以便诊断
+          echo "=== gcc/g++ versions ==="
+          gcc --version || true
+          g++ --version || true
+          echo "=== mingw gcc version ==="
+          x86_64-w64-mingw32-gcc --version || true
+          echo "=== dpkg: libc6-dev ==="
+          dpkg -l libc6-dev || true
 
-      # ====================== Harbour 最新 commit（用于缓存 key） ======================
       - name: 获取 Harbour 最新 commit（缓存专用）
         id: harbour-commit
         run: echo "commit=$(git ls-remote https://github.com/harbour/core.git HEAD | cut -f1)" >> $GITHUB_OUTPUT
@@ -38,9 +47,7 @@ jobs:
       - name: 获取 HwGUI 最新 commit（缓存专用）
         id: hwgui-commit
         run: echo "commit=$(git ls-remote https://github.com/JoseQuintas/hwgui_fork.git HEAD | cut -f1)" >> $GITHUB_OUTPUT
-      # =================================================================================
 
-      # ====================== Harbour Linux 原生编译 + 缓存 ======================
       - name: Cache Harbour Linux
         id: cache-harbour-linux
         uses: actions/cache@v4
@@ -53,6 +60,7 @@ jobs:
         env:
           HB_COMPILER: gcc
         run: |
+          set -o pipefail
           git clone https://github.com/harbour/core /tmp/harbour-linux --depth 1
           cd /tmp/harbour-linux
           sudo mkdir -p /opt/harbour
@@ -60,7 +68,7 @@ jobs:
           export HB_BUILD_CONTRIBS=""
           export HB_WITH_PCRE=local
           export HB_INSTALL_PREFIX=/opt/harbour
-          export HB_MT=yes                       #启用多线程支持
+          export HB_MT=yes                       # 启用多线程支持
           # 为降低对外部可选库的依赖，禁用一些可选模块（可选：若你愿意可安装对应 dev 包）
           export HB_WITH_GD=no
           export HB_WITH_FREEIMAGE=no
@@ -71,9 +79,29 @@ jobs:
           export HB_WITH_MAGIC=no
           export HB_WITH_CUPS=no
           export HB_WITH_ALLEGRO=no
-          make -j$(nproc)
+
+          # 诊断信息
+          echo "=== env summary ==="
+          env | egrep 'HB_|PATH' || true
+          echo "=== ls /usr/include (head) ==="
+          ls -l /usr/include | head -n 200 || true
+
+          # 使用单线程构建并把输出保存在日志，失败时打印日志尾部以便定位
+          make -j1 2>&1 | tee /tmp/harbour-build.log || {
+            echo "=== Build failed. Tail of /tmp/harbour-build.log ==="
+            tail -n 300 /tmp/harbour-build.log || true
+            echo "=== ls /opt /opt/harbour (after make) ==="
+            ls -l /opt || true
+            ls -l /opt/harbour || true
+            exit 1
+          }
+
           sudo mkdir -p /opt/harbour
-          sudo make install
+          sudo make install 2>&1 | tee /tmp/harbour-install.log || {
+            echo "=== Install failed. Tail of /tmp/harbour-install.log ==="
+            tail -n 300 /tmp/harbour-install.log || true
+            exit 1
+          }
 
       - name: 把 Harbour Linux 添加到 PATH（hbmk2 能直接调用）
         run: echo "/opt/harbour/bin" >> $GITHUB_PATH
@@ -90,12 +118,9 @@ jobs:
             echo "当前 PATH=$PATH"
             ls -l /tmp/harbour-linux || true
             # 让 job 失败以暴露更多日志
-            #exit 1
-            ls -l /tmp/harbour-linux/bin
+            exit 1
           fi
-      # =================================================================================
 
-      # ====================== Harbour Windows 交叉编译 + 缓存 ======================
       - name: Cache Harbour Windows (mingw64)
         id: cache-harbour-win
         uses: actions/cache@v4
@@ -106,6 +131,7 @@ jobs:
       - name: 编译 Harbour Windows 交叉版（缓存未命中时执行）
         if: steps.cache-harbour-win.outputs.cache-hit != 'true'
         run: |
+          set -o pipefail
           git clone https://github.com/harbour/core /tmp/harbour-win --depth 1
           cd /tmp/harbour-win
           # 为降低对外部可选库的依赖，禁用一些可选模块（在 win 交叉编译时同样有帮助）
@@ -124,38 +150,34 @@ jobs:
           export HB_CCPATH=/usr/bin/
           export HB_CCPREFIX=x86_64-w64-mingw32-
           export HB_USER_CFLAGS="-fPIC"
-          export HB_BUILD_CONTRIBS=""
           export HB_WITH_PCRE=local
           export HB_INSTALL_PREFIX=/opt/harbour-win
           # 64位 Windows 交叉编译
-          export HB_MT=yes                       #启用多线程支持
-          export HB_PLATFORM=win
-          export HB_COMPILER=mingw64
-          export HB_CCPREFIX=x86_64-w64-mingw32-
-          # 图像/压缩库
-          export HB_WITH_ZLIB=local          # zlib库
-          export HB_WITH_PCRE=local          # PCRE正则库
-          export HB_WITH_PNG=local           # PNG图像库
-          export HB_WITH_JPEG=local          # JPEG图像库
-          
-          #编译不设这几个会报错
-          export HB_WITH_CURSES=no
-          export HB_WITH_SLANG=no
-          export HB_WITH_X11=no
-          export HB_WITH_MYSQL=no
-          
-          #没编译过，先屏蔽
-          export HB_WITH_OPENSSL=no
-          export HB_WITH_EXPAT=local
-          export HB_WITH_BZIP2=no
-          export HB_WITH_SQLITE3=no
-          
-          make -j$(nproc)
-          sudo mkdir -p /opt/harbour-win
-          sudo make install
-      # =================================================================================
+          export HB_MT=yes
+          export HB_WITH_ZLIB=local
+          export HB_WITH_PNG=local
+          export HB_WITH_JPEG=local
 
-      # ====================== HwGUI Linux + Windows 交叉编译 + 缓存 ======================
+          # 诊断信息
+          echo "=== mingw info ==="
+          x86_64-w64-mingw32-gcc --version || true
+          ls -l /usr/x86_64-w64-mingw32* /usr/lib/gcc* 2>/dev/null || true
+
+          # 使用单线程构建并把输出保存在日志，失败时打印日志尾部以便定位
+          make -j1 2>&1 | tee /tmp/harbour-win-build.log || {
+            echo "=== Windows build failed. Tail of /tmp/harbour-win-build.log ==="
+            tail -n 300 /tmp/harbour-win-build.log || true
+            ls -l /tmp/harbour-win || true
+            exit 1
+          }
+
+          sudo mkdir -p /opt/harbour-win
+          sudo make install 2>&1 | tee /tmp/harbour-win-install.log || {
+            echo "=== Windows install failed. Tail of /tmp/harbour-win-install.log ==="
+            tail -n 300 /tmp/harbour-win-install.log || true
+            exit 1
+          }
+
       - name: Cache HwGUI（Linux + Windows 合并缓存）
         id: cache-hwgui
         uses: actions/cache@v4
@@ -179,15 +201,13 @@ jobs:
           sudo cp lib/*.a /opt/hwgui/lib/linux/gcc/
 
           # === Windows 交叉编译版 ===
-           HB_PLATFORM=win HB_COMPILER=mingw64 HB_CCPREFIX=x86_64-w64-mingw32- HB_CCPATH=/usr/bin hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
+          HB_PLATFORM=win HB_COMPILER=mingw64 HB_CCPREFIX=x86_64-w64-mingw32- HB_CCPATH=/usr/bin hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
           HB_PLATFORM=win HB_COMPILER=mingw64 HB_CCPREFIX=x86_64-w64-mingw32- HB_CCPATH=/usr/bin hbmk2 hbxml.hbp -workdir=/tmp -w3 -es2
           HB_PLATFORM=win HB_COMPILER=mingw64 HB_CCPREFIX=x86_64-w64-mingw32- HB_CCPATH=/usr/bin hbmk2 procmisc.hbp -workdir=/tmp -w3 -es2
           HB_PLATFORM=win HB_COMPILER=mingw64 HB_CCPREFIX=x86_64-w64-mingw32- HB_CCPATH=/usr/bin hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
           sudo mkdir -p /opt/hwgui/lib/win/mingw64
           sudo cp lib/*.a /opt/hwgui/lib/win/mingw64/
-      # =================================================================================
 
-      # ====================== 构建 GUI 程序 ======================
       - name: Build GUI (Linux + Windows)
         run: |
           git clone https://github.com/woodhead2019/Harbour-ChineseChess.git /tmp/cchess --depth 1
@@ -210,7 +230,6 @@ jobs:
           cd /tmp/cchess
           ls -lh cchess-*-linux-x86_64.tar.gz cchess-*-windows-x86_64.zip cchess-*-source.tar.gz 2>/dev/null || echo "No packages found"
 
-      # ====================== 上传 artifact ======================
       - name: Upload Linux package
         uses: actions/upload-artifact@v4
         with:
