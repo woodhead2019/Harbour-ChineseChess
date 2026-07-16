@@ -145,6 +145,11 @@ jobs:
           export HB_WITH_MAGIC=no
           export HB_WITH_CUPS=no
           export HB_WITH_ALLEGRO=no
+          export HB_WITH_SLANG=no
+          export HB_WITH_CURSES=no
+          export HB_WITH_X11=no
+          export HB_WITH_GPM=no
+          export HB_WITH_WATT=no
           export HB_PLATFORM=win
           export HB_COMPILER=mingw64
           export HB_CCPATH=/usr/bin/
