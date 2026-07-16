@@ -151,6 +151,7 @@ jobs:
           export HB_CCPREFIX=x86_64-w64-mingw32-
           export HB_USER_CFLAGS="-fPIC"
           export HB_WITH_PCRE=local
+          export HB_BUILD_CONTRIBS=no 
           export HB_INSTALL_PREFIX=/opt/harbour-win
           # 64位 Windows 交叉编译
           export HB_MT=yes
