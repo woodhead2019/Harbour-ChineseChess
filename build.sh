@@ -111,6 +111,43 @@ setup_windows_env() {
     # mingw64 不需要額外设置環境變量，hbmk2 會自動檢測
 }
 
+# 新增：编译 eleeye_hb 库（Linux + Windows）
+build_eleeye() {
+    echo ""
+    print_info2 "开始编译 eleeye_hb 库"
+    # 在仓库根目录的 eleeye_hb 下编译 Linux 静态库
+    if [ -d "eleeye_hb" ]; then
+        pushd eleeye_hb > /dev/null || return 1
+        if [ -f "Makefile.libhb" ]; then
+            echo "编译 Linux 静态库: make -f Makefile.libhb"
+            make -f Makefile.libhb || {
+                print_error "eleeye_hb Linux 库编译失败"
+                popd > /dev/null
+                return 1
+            }
+            ls -l lib/linux/gcc/libeleeye.a || true
+        fi
+
+        # 如果需要为 Windows (mingw) 生成静态库，尝试用 Makefile.libhb.win
+        if [ "$HB_COMPILER" = "mingw64" ] || command -v x86_64-w64-mingw32-gcc >/dev/null 2>&1; then
+            if [ -f "Makefile.libhb.win" ]; then
+                echo "编译 Windows 静态库: make -f Makefile.libhb.win"
+                make -f Makefile.libhb.win || {
+                    print_warning "eleeye_hb Windows 静态库编译失败（可选），继续构建（如果不需要 Windows 库可忽略）"
+                    # 不直接返回错误，Windows 静态库通常是可选的
+                }
+                ls -l lib/win/mingw64/libeleeye.a || true
+            fi
+        fi
+
+        popd > /dev/null
+    else
+        print_warning "未找到 eleeye_hb 目录，跳过 eleeye 库编译"
+    fi
+    echo ""
+    return 0
+}
+
 # ==================== 构建 GUI 版本 ====================
 build_gui() {
     local platform=$1
@@ -174,6 +211,9 @@ build_gui() {
 
     echo "构建命令: $build_cmd"
     echo ""
+
+# 在生成 build_cmd 之后、执行构建命令之前加：
+build_eleeye || { print_error "eleeye_hb 库编译失败，停止构建"; return 1; }
 
     # 如果使用 ucrt64 编译器，创建临时包装脚本移除 -mconsole 选项
     if [ "$use_ucrt64" = "1" ]; then

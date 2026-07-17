@@ -82,8 +82,8 @@ xqengine.prg/xqengine/xqengine_core.prg
 # eleeye_hb/eleeye_hb.cpp
 
 # 象眼引擎库路径（临时使用，直到源文件可用）
-{unix}-L/home/woodhead/cchess/eleeye_hb/lib/linux/gcc
-{win}-L/home/woodhead/cchess/eleeye_hb/lib/win/mingw64
+{unix}-L./eleeye_hb/lib/linux/gcc
+{win}-L./eleeye_hb/lib/win/mingw64
 
 # C++ 标准库
 {unix}-lstdc++
@@ -102,7 +102,7 @@ xqengine.prg/xqengine/xqengine_core.prg
 
 # 象眼引擎库（使用全路径，必须放在所有其他库之后）
 {unix}-leleeye
-{win}-ldflag=/home/woodhead/cchess/eleeye_hb/lib/win/mingw64/libeleeye.a
+{win}-ldflag=./eleeye_hb/lib/win/mingw64/libeleeye.a
 
 # ==================== 调试和输出选项 ====================
 # 显示执行的命令（详细输出）
