@@ -52,7 +52,9 @@ jobs:
         id: cache-harbour-linux
         uses: actions/cache@v4
         with:
-          path: /opt/harbour
+          path: |
+            /opt/harbour
+            /tmp/harbour-linux
           key: harbour-linux-${{ steps.harbour-commit.outputs.commit }}-${{ runner.os }}
 
       - name: 编译 Harbour Linux（缓存未命中时执行）
@@ -125,7 +127,9 @@ jobs:
         id: cache-harbour-win
         uses: actions/cache@v4
         with:
-          path: /opt/harbour-win
+          path: |
+            /opt/harbour-win
+            /tmp/harbour-linux
           key: harbour-win-${{ steps.harbour-commit.outputs.commit }}-${{ runner.os }}
 
       - name: 编译 Harbour Windows 交叉版（缓存未命中时执行）
