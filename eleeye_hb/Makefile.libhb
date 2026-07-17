@@ -27,7 +27,7 @@ AR = ar
 CFLAGS = -fPIC -I. \
          -Ibase \
          -Ieleeye \
-         -I/opt/harbour/include \
+         -I/tmp/harbour-linux/include \
          -fPIC \
          -Wall \
          -Wextra

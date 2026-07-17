@@ -27,7 +27,7 @@ AR = x86_64-w64-mingw32ucrt-ar
 CFLAGS = -I. \
          -Ibase \
          -Ieleeye \
-         -I/opt/harbour/include \
+         -I/tmp/harbour-win/include \
          -fPIC \
          -Wall \
          -Wextra \
