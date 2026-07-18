@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     
     permissions:
-      contents: write # 赋予创建 Release 所需的写权限
+      contents: write # 显式赋予创建 Release 所需的写权限
 
     steps:
       - name: Checkout repository
@@ -24,41 +24,47 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential autoconf automake libtool pkg-config git wget ca-certificates jq
 
-      # 替换原有的 git clone 步骤
       - name: Download and extract Harbour core v3.2.0
         run: |
           set -euo pipefail
           wget https://github.com/harbour/core/releases/download/v3.2.0/harbour-3.2.0.src.tar.gz
           tar -xzf harbour-3.2.0.src.tar.gz
-          ls -la harbour-3.2.0
+          
+          # 动态获取解压出来的实际目录名称（通常是 harbour），防止硬编码错误[cite: 1]
+          EXTRACTED_DIR=$(ls -d */ | grep -v 'install' | head -n1 | sed 's/\///')
+          echo "Real extracted directory: $EXTRACTED_DIR"
+          
+          # 存入 GitHub 全局环境变量，供后面的步骤引用[cite: 1]
+          echo "HB_SRC_DIR=$EXTRACTED_DIR" >> $GITHUB_ENV
+          ls -la "$EXTRACTED_DIR"
 
       - name: Prepare build (autogen/configure)
-        working-directory: harbour-3.2.0
         run: |
           set -euo pipefail
+          cd "${{ env.HB_SRC_DIR }}"
           if [ -x ./autogen.sh ]; then ./autogen.sh; fi
           if [ -f configure ]; then ./configure --prefix=$PWD/install; fi
 
       - name: Build (capture log)
-        working-directory: harbour-3.2.0
         run: |
           set -euo pipefail
+          cd "${{ env.HB_SRC_DIR }}"
+          # 即使 make 失败也继续，方便后续收集日志[cite: 1]
           make -j"$(nproc)" 2>&1 | tee build.log || true
 
       - name: Install into local prefix
-        working-directory: harbour-3.2.0
         run: |
           set -euo pipefail
+          cd "${{ env.HB_SRC_DIR }}"
           make install DESTDIR=$PWD/install || true
 
       - name: Package build outputs
         run: |
           set -euo pipefail
-          # 针对新的目录名调整打包路径
-          if [ -d harbour-3.2.0/install ]; then
-            tar -czf harbour-linux-build.tar.gz -C harbour-3.2.0 install
+          if [ -d "${{ env.HB_SRC_DIR }}/install" ]; then
+            tar -czf harbour-linux-build.tar.gz -C "${{ env.HB_SRC_DIR }}" install
           else
-            tar -czf harbour-linux-build.tar.gz harbour-3.2.0/build.log || tar -czf harbour-linux-build.tar.gz harbour-3.2.0
+            tar -czf harbour-linux-build.tar.gz "${{ env.HB_SRC_DIR }}/build.log" || tar -czf harbour-linux-build.tar.gz "${{ env.HB_SRC_DIR }}"
           fi
           ls -lh harbour-linux-build.tar.gz
 
@@ -73,7 +79,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: harbour-build-log
-          path: harbour-3.2.0/build.log
+          path: ${{ env.HB_SRC_DIR }}/build.log
 
       - name: Create GitHub release and upload asset (only for tag pushes)
         if: startsWith(github.ref, 'refs/tags/')
