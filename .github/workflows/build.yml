@@ -192,7 +192,9 @@ jobs:
         id: cache-hwgui
         uses: actions/cache@v4
         with:
-          path: /opt/hwgui
+          path: |
+            /opt/hwgui
+            /tmp/hwgui
           key: hwgui-${{ steps.hwgui-commit.outputs.commit }}-${{ steps.harbour-commit.outputs.commit }}-${{ runner.os }}
 
       - name: 编译 HwGUI Linux + Windows（缓存未命中时执行）
@@ -200,6 +202,7 @@ jobs:
         run: |
           git clone https://github.com/JoseQuintas/hwgui_fork /tmp/hwgui --depth 1
           cd /tmp/hwgui
+          ls -a
 
           # === Linux 版 ===
           hbmk2 hwgui.hbp -workdir=/tmp -w3 -es2
@@ -217,6 +220,7 @@ jobs:
           HB_PLATFORM=win HB_COMPILER=mingw64 HB_CCPREFIX=x86_64-w64-mingw32- HB_CCPATH=/usr/bin hbmk2 hwgdebug.hbp -workdir=/tmp -w3 -es2
           sudo mkdir -p /opt/hwgui/lib/win/mingw64
           sudo cp lib/*.a /opt/hwgui/lib/win/mingw64/
+          tree /opt/hwgui/lib
 
       - name: Build GUI (Linux + Windows)
         run: |

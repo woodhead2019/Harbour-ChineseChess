@@ -20,8 +20,8 @@
 #
 # ========================================
 
-CC = x86_64-w64-mingw32ucrt-g++
-AR = x86_64-w64-mingw32ucrt-ar
+CC = x86_64-w64-mingw32-g++
+AR = x86_64-w64-mingw32-ar
 
 # 编译选项
 CFLAGS = -I. \
