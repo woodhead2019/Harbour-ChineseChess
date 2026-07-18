@@ -1,0 +1,107 @@
+name: Build Harbour (Linux) - Stable Version
+
+on:
+  workflow_dispatch:  # 允许手动触发
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'          # 推送以 v 开头的 tag 时会同时触发发布步骤
+
+jobs:
+  build:
+    name: Download → Build → Package → (Optional) Release
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write # 赋予创建 Release 所需的写权限
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake libtool pkg-config git wget ca-certificates jq
+
+      # 替换原有的 git clone 步骤
+      - name: Download and extract Harbour core v3.2.0
+        run: |
+          set -euo pipefail
+          wget https://github.com/harbour/core/releases/download/v3.2.0/harbour-3.2.0.src.tar.gz
+          tar -xzf harbour-3.2.0.src.tar.gz
+          ls -la harbour-3.2.0
+
+      - name: Prepare build (autogen/configure)
+        working-directory: harbour-3.2.0
+        run: |
+          set -euo pipefail
+          if [ -x ./autogen.sh ]; then ./autogen.sh; fi
+          if [ -f configure ]; then ./configure --prefix=$PWD/install; fi
+
+      - name: Build (capture log)
+        working-directory: harbour-3.2.0
+        run: |
+          set -euo pipefail
+          make -j"$(nproc)" 2>&1 | tee build.log || true
+
+      - name: Install into local prefix
+        working-directory: harbour-3.2.0
+        run: |
+          set -euo pipefail
+          make install DESTDIR=$PWD/install || true
+
+      - name: Package build outputs
+        run: |
+          set -euo pipefail
+          # 针对新的目录名调整打包路径
+          if [ -d harbour-3.2.0/install ]; then
+            tar -czf harbour-linux-build.tar.gz -C harbour-3.2.0 install
+          else
+            tar -czf harbour-linux-build.tar.gz harbour-3.2.0/build.log || tar -czf harbour-linux-build.tar.gz harbour-3.2.0
+          fi
+          ls -lh harbour-linux-build.tar.gz
+
+      - name: Upload artifact (build)
+        uses: actions/upload-artifact@v4
+        with:
+          name: harbour-linux-build
+          path: harbour-linux-build.tar.gz
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harbour-build-log
+          path: harbour-3.2.0/build.log
+
+      - name: Create GitHub release and upload asset (only for tag pushes)
+        if: startsWith(github.ref, 'refs/tags/')
+        id: create_release_and_upload
+        run: |
+          set -euo pipefail
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "Tag: $TAG"
+
+          # Create release
+          response=$(curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${GITHUB_REPOSITORY}/releases \
+            -d "$(jq -n --arg tag "$TAG" --arg name "$TAG" --arg body "Automated build for $TAG (Based on Harbour v3.2.0)" '{ tag_name: $tag, name: $name, body: $body, draft: false, prerelease: false }')")
+          
+          upload_url=$(echo "$response" | jq -r .upload_url | sed -e "s/{?name,label}//")
+          echo "Upload URL: $upload_url"
+
+          if [ "$upload_url" = "null" ] || [ -z "$upload_url" ]; then
+            echo "Error: Failed to create release or fetch upload_url"
+            echo "API Response: $response"
+            exit 1
+          fi
+
+          # upload asset
+          curl --silent --show-error -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Content-Type: application/gzip" \
+            --data-binary @./harbour-linux-build.tar.gz \
+            "${upload_url}?name=harbour-linux-build.tar.gz"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
