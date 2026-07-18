@@ -125,6 +125,7 @@ build_eleeye() {
                 popd > /dev/null
                 return 1
             }
+            ls -a
             ls -l lib/linux/gcc/libeleeye.a || true
         fi
 
@@ -136,6 +137,7 @@ build_eleeye() {
                     print_warning "eleeye_hb Windows 静态库编译失败（可选），继续构建（如果不需要 Windows 库可忽略）"
                     # 不直接返回错误，Windows 静态库通常是可选的
                 }
+	        ls -a
                 ls -l lib/win/mingw64/libeleeye.a || true
             fi
         fi
