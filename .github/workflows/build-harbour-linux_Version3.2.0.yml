@@ -27,9 +27,11 @@ jobs:
       - name: Download and extract Harbour core v3.2.0
         run: |
           set -euo pipefail
+          pwd
           wget https://github.com/harbour/core/releases/download/v3.2.0/harbour-3.2.0.src.tar.gz
           tar -xzf harbour-3.2.0.src.tar.gz
-          
+          ls -la
+
           # 动态获取解压出来的实际目录名称（通常是 harbour），防止硬编码错误[cite: 1]
           EXTRACTED_DIR=$(ls -d */ | grep -v 'install' | head -n1 | sed 's/\///')
           echo "Real extracted directory: $EXTRACTED_DIR"
