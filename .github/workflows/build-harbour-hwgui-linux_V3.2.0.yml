@@ -1,4 +1,4 @@
-name: Build Harbour (Linux) - Stable Version
+name: Build Harbour+Hwgui (Linux) - Stable Version
 
 on:
   workflow_dispatch:
