@@ -27,25 +27,21 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential autoconf automake libtool pkg-config git wget ca-certificates jq
-
-      - name: Download and extract Harbour core v${{ env.HB_VERSION }}
+- name: Download and extract Harbour core v${{ env.HB_VERSION }}
         run: |
           set -euo pipefail
           wget https://github.com/harbour/core/releases/download/v${{ env.HB_VERSION }}/harbour-${{ env.HB_VERSION }}.src.tar.gz
 
           echo "=== Tarball contents (first 20 entries) ==="
-          tar -tzf harbour-${{ env.HB_VERSION }}.src.tar.gz | head -20
+          tar -tzf harbour-${{ env.HB_VERSION }}.src.tar.gz | sed -n '1,20p'
 
           mkdir -p harbour-src
           tar -xzf harbour-${{ env.HB_VERSION }}.src.tar.gz -C harbour-src
 
-          # 如果 harbour-src 里只有唯一一个子目录，就把它内容提升上来
-          SUBDIRS=$(ls -d harbour-src/*/ 2>/dev/null | wc -l)
-          if [ "$SUBDIRS" -eq 1 ]; then
-            echo "Single subdirectory detected, flattening..."
-            mv harbour-src/*/* harbour-src/
-            rmdir harbour-src/*/ 2>/dev/null || true
-          fi
+          # 平铺的 tarball（无顶层目录），不需要 flatten
+          # 确认一下内容
+          echo "=== Final source tree (top level) ==="
+          ls -la harbour-src/
 
           echo "HB_SRC_DIR=$PWD/harbour-src" >> $GITHUB_ENV
           echo "=== Final source tree ==="
