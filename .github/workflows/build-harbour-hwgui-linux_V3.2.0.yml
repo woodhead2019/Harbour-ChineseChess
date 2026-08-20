@@ -1,4 +1,4 @@
-name: Build Harbour+Hwgui (Linux) - Stable Version
+name: Build Harbour (Linux) - Stable Version
 
 on:
   workflow_dispatch:
@@ -32,12 +32,24 @@ jobs:
         run: |
           set -euo pipefail
           wget https://github.com/harbour/core/releases/download/v${{ env.HB_VERSION }}/harbour-${{ env.HB_VERSION }}.src.tar.gz
-          tar -xzf harbour-${{ env.HB_VERSION }}.src.tar.gz
 
-          EXTRACTED_DIR=$(ls -d */ | grep -v 'install' | head -n1 | sed 's/\///')
-          echo "HB_SRC_DIR=$EXTRACTED_DIR" >> $GITHUB_ENV
-          echo "Real extracted directory: $EXTRACTED_DIR"
-          ls -la "$EXTRACTED_DIR"
+          echo "=== Tarball contents (first 20 entries) ==="
+          tar -tzf harbour-${{ env.HB_VERSION }}.src.tar.gz | head -20
+
+          mkdir -p harbour-src
+          tar -xzf harbour-${{ env.HB_VERSION }}.src.tar.gz -C harbour-src
+
+          # 如果 harbour-src 里只有唯一一个子目录，就把它内容提升上来
+          SUBDIRS=$(ls -d harbour-src/*/ 2>/dev/null | wc -l)
+          if [ "$SUBDIRS" -eq 1 ]; then
+            echo "Single subdirectory detected, flattening..."
+            mv harbour-src/*/* harbour-src/
+            rmdir harbour-src/*/ 2>/dev/null || true
+          fi
+
+          echo "HB_SRC_DIR=$PWD/harbour-src" >> $GITHUB_ENV
+          echo "=== Final source tree ==="
+          ls -la harbour-src/
 
       - name: Prepare build (autogen/configure)
         run: |
@@ -59,29 +71,25 @@ jobs:
           make install DESTDIR=$PWD/install || true
 
       # ============================================================
-      # ★ 新增：把 install/ 的产物按规范目录结构拷贝到 /opt/harbour/
+      # 把 install/ 的产物按规范目录结构拷贝到 /opt/harbour/
       # ============================================================
       - name: Populate /opt/harbour directory structure
         run: |
           set -euo pipefail
           INSTALL_DIR="${{ env.HB_SRC_DIR }}/install"
 
-          # 创建目标目录结构
           sudo mkdir -p ${HARBOUR_ROOT}/bin/linux/gcc
           sudo mkdir -p ${HARBOUR_ROOT}/include
           sudo mkdir -p ${HARBOUR_ROOT}/lib/linux/gcc
 
-          # 拷贝可执行文件
           if [ -d "$INSTALL_DIR/bin" ]; then
             sudo cp -r "$INSTALL_DIR/bin/"* ${HARBOUR_ROOT}/bin/linux/gcc/
           fi
 
-          # 拷贝头文件
           if [ -d "$INSTALL_DIR/include" ]; then
             sudo cp -r "$INSTALL_DIR/include/"* ${HARBOUR_ROOT}/include/
           fi
 
-          # 拷贝库文件
           if [ -d "$INSTALL_DIR/lib" ]; then
             sudo cp -r "$INSTALL_DIR/lib/"* ${HARBOUR_ROOT}/lib/linux/gcc/
           fi
@@ -92,7 +100,6 @@ jobs:
       - name: Package build outputs
         run: |
           set -euo pipefail
-          # 打包 /opt/harbour 而不是 install/
           sudo tar -czf harbour-linux-build.tar.gz -C /opt harbour
           ls -lh harbour-linux-build.tar.gz
 
