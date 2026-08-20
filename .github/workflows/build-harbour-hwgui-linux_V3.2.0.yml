@@ -1,4 +1,4 @@
-name: Build Harbour (Linux) - Stable Version
+name: Build Harbour+Hwgui (Linux) - Stable Version
 
 on:
   workflow_dispatch:
@@ -27,7 +27,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential autoconf automake libtool pkg-config git wget ca-certificates jq
-- name: Download and extract Harbour core v${{ env.HB_VERSION }}
+
+      - name: Download and extract Harbour core v${{ env.HB_VERSION }}
         run: |
           set -euo pipefail
           wget https://github.com/harbour/core/releases/download/v${{ env.HB_VERSION }}/harbour-${{ env.HB_VERSION }}.src.tar.gz
@@ -41,14 +42,10 @@ jobs:
           mkdir -p harbour-src
           tar -xzf harbour-${{ env.HB_VERSION }}.src.tar.gz -C harbour-src
 
-          # 平铺的 tarball（无顶层目录），不需要 flatten
-          # 确认一下内容
           echo "=== Final source tree (top level) ==="
           ls -la harbour-src/
 
           echo "HB_SRC_DIR=$PWD/harbour-src" >> $GITHUB_ENV
-          echo "=== Final source tree ==="
-          ls -la harbour-src/
 
       - name: Prepare build (autogen/configure)
         run: |
@@ -69,9 +66,6 @@ jobs:
           cd "${{ env.HB_SRC_DIR }}"
           make install DESTDIR=$PWD/install || true
 
-      # ============================================================
-      # 把 install/ 的产物按规范目录结构拷贝到 /opt/harbour/
-      # ============================================================
       - name: Populate /opt/harbour directory structure
         run: |
           set -euo pipefail
