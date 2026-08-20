@@ -35,6 +35,9 @@ jobs:
           echo "=== Tarball contents (first 20 entries) ==="
           tar -tzf harbour-${{ env.HB_VERSION }}.src.tar.gz | sed -n '1,20p'
 
+          echo "=== PWD ==="
+          pwd
+          echo "==========="
           mkdir -p harbour-src
           tar -xzf harbour-${{ env.HB_VERSION }}.src.tar.gz -C harbour-src
 
