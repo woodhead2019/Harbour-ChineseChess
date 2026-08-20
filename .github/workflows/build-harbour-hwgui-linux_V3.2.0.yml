@@ -1,0 +1,137 @@
+name: Build Harbour (Linux) - Stable Version
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    tags:
+      - 'v*'
+
+env:
+  HARBOUR_ROOT: /opt/harbour
+  HB_VERSION: "3.2.0"
+
+jobs:
+  build:
+    name: Download → Build → Install → Package (opt/harbour) → (Optional) Release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake libtool pkg-config git wget ca-certificates jq
+
+      - name: Download and extract Harbour core v${{ env.HB_VERSION }}
+        run: |
+          set -euo pipefail
+          wget https://github.com/harbour/core/releases/download/v${{ env.HB_VERSION }}/harbour-${{ env.HB_VERSION }}.src.tar.gz
+          tar -xzf harbour-${{ env.HB_VERSION }}.src.tar.gz
+
+          EXTRACTED_DIR=$(ls -d */ | grep -v 'install' | head -n1 | sed 's/\///')
+          echo "HB_SRC_DIR=$EXTRACTED_DIR" >> $GITHUB_ENV
+          echo "Real extracted directory: $EXTRACTED_DIR"
+          ls -la "$EXTRACTED_DIR"
+
+      - name: Prepare build (autogen/configure)
+        run: |
+          set -euo pipefail
+          cd "${{ env.HB_SRC_DIR }}"
+          if [ -x ./autogen.sh ]; then ./autogen.sh; fi
+          if [ -f configure ]; then ./configure --prefix=$PWD/install; fi
+
+      - name: Build (capture log)
+        run: |
+          set -euo pipefail
+          cd "${{ env.HB_SRC_DIR }}"
+          make -j"$(nproc)" 2>&1 | tee build.log || true
+
+      - name: Install into local prefix
+        run: |
+          set -euo pipefail
+          cd "${{ env.HB_SRC_DIR }}"
+          make install DESTDIR=$PWD/install || true
+
+      # ============================================================
+      # ★ 新增：把 install/ 的产物按规范目录结构拷贝到 /opt/harbour/
+      # ============================================================
+      - name: Populate /opt/harbour directory structure
+        run: |
+          set -euo pipefail
+          INSTALL_DIR="${{ env.HB_SRC_DIR }}/install"
+
+          # 创建目标目录结构
+          sudo mkdir -p ${HARBOUR_ROOT}/bin/linux/gcc
+          sudo mkdir -p ${HARBOUR_ROOT}/include
+          sudo mkdir -p ${HARBOUR_ROOT}/lib/linux/gcc
+
+          # 拷贝可执行文件
+          if [ -d "$INSTALL_DIR/bin" ]; then
+            sudo cp -r "$INSTALL_DIR/bin/"* ${HARBOUR_ROOT}/bin/linux/gcc/
+          fi
+
+          # 拷贝头文件
+          if [ -d "$INSTALL_DIR/include" ]; then
+            sudo cp -r "$INSTALL_DIR/include/"* ${HARBOUR_ROOT}/include/
+          fi
+
+          # 拷贝库文件
+          if [ -d "$INSTALL_DIR/lib" ]; then
+            sudo cp -r "$INSTALL_DIR/lib/"* ${HARBOUR_ROOT}/lib/linux/gcc/
+          fi
+
+          echo "=== /opt/harbour structure ==="
+          find ${HARBOUR_ROOT} -type f | sort
+
+      - name: Package build outputs
+        run: |
+          set -euo pipefail
+          # 打包 /opt/harbour 而不是 install/
+          sudo tar -czf harbour-linux-build.tar.gz -C /opt harbour
+          ls -lh harbour-linux-build.tar.gz
+
+      - name: Upload artifact (harbour /opt/harbour)
+        uses: actions/upload-artifact@v4
+        with:
+          name: harbour-linux-gcc
+          path: harbour-linux-build.tar.gz
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harbour-build-log
+          path: ${{ env.HB_SRC_DIR }}/build.log
+
+      - name: Create GitHub release and upload asset (only for tag pushes)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          set -euo pipefail
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "Tag: $TAG"
+
+          response=$(curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${GITHUB_REPOSITORY}/releases \
+            -d "$(jq -n --arg tag "$TAG" --arg name "$TAG" --arg body "Automated build for $TAG (Based on Harbour v${{ env.HB_VERSION }})" '{ tag_name: $tag, name: $name, body: $body, draft: false, prerelease: false }')")
+
+          upload_url=$(echo "$response" | jq -r .upload_url | sed -e "s/{?name,label}//")
+
+          if [ "$upload_url" = "null" ] || [ -z "$upload_url" ]; then
+            echo "Error: Failed to create release or fetch upload_url"
+            echo "API Response: $response"
+            exit 1
+          fi
+
+          curl --silent --show-error -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Content-Type: application/gzip" \
+            --data-binary @./harbour-linux-build.tar.gz \
+            "${upload_url}?name=harbour-linux-build.tar.gz"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
