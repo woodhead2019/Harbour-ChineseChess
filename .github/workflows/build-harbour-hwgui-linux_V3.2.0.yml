@@ -42,17 +42,11 @@ jobs:
           mkdir -p harbour-src
           tar -xzf harbour-${{ env.HB_VERSION }}.src.tar.gz -C harbour-src
 
+          ls -la ./ 
           echo "=== Final source tree (top level) ==="
           ls -la harbour-src/
 
           echo "HB_SRC_DIR=$PWD/harbour-src" >> $GITHUB_ENV
-
-      - name: Prepare build (autogen/configure)
-        run: |
-          set -euo pipefail
-          cd "${{ env.HB_SRC_DIR }}"
-          if [ -x ./autogen.sh ]; then ./autogen.sh; fi
-          if [ -f configure ]; then ./configure --prefix=$PWD/install; fi
 
       - name: Build (capture log)
         run: |
