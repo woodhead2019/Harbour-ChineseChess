@@ -29,23 +29,14 @@ jobs:
           set -euo pipefail
           pwd
           wget https://github.com/harbour/core/releases/download/v3.2.0/harbour-3.2.0.src.tar.gz
-          tar -xzf harbour-3.2.0.src.tar.gz
-          ls -la
+          pwd
+          # 直接解压到 harbour-src
+          mkdir -p harbour-src
+          tar -xzf harbour-3.2.0.src.tar.gz -C harbour-src
 
-          # 动态获取解压出来的实际目录名称（通常是 harbour），防止硬编码错误[cite: 1]
-          EXTRACTED_DIR=$(ls -d */ | grep -v 'install' | head -n1 | sed 's/\///')
-          echo "Real extracted directory: $EXTRACTED_DIR"
-          
           # 存入 GitHub 全局环境变量，供后面的步骤引用[cite: 1]
-          echo "HB_SRC_DIR=$EXTRACTED_DIR" >> $GITHUB_ENV
-          ls -la "$EXTRACTED_DIR"
-
-      - name: Prepare build (autogen/configure)
-        run: |
-          set -euo pipefail
-          cd "${{ env.HB_SRC_DIR }}"
-          if [ -x ./autogen.sh ]; then ./autogen.sh; fi
-          if [ -f configure ]; then ./configure --prefix=$PWD/install; fi
+          echo "HB_SRC_DIR=$PWD/harbour-src" >> $GITHUB_ENV
+          ls -la "$HB_SRC_DIR"
 
       - name: Build (capture log)
         run: |
