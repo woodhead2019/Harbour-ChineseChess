@@ -22,7 +22,25 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential autoconf automake libtool pkg-config git wget ca-certificates jq
+          sudo apt-get install -y \
+             build-essential autoconf automake libtool pkg-config git wget ca-certificates jq \
+             libgtk2.0-dev libcairo2-dev libpango1.0-dev libglib2.0-dev libgdk-pixbuf2.0-dev \
+             libx11-dev libxext-dev libxrandr-dev libfreetype6-dev libfontconfig1-dev \
+             libpng-dev libjpeg-dev libtiff5-dev libgd-dev libfreeimage-dev \
+             libcurl4-openssl-dev libmagic-dev unixodbc-dev ghostscript \
+             libssl-dev
+ 
+      - name: Verify pkg-config and headers
+        run: |
+           set -euo pipefail
+           echo "gtk+-2.0 version:"
+           pkg-config --modversion gtk+-2.0 || echo "gtk+-2.0 not found (pkg-config)"
+           echo "cairo cflags:"
+           pkg-config --cflags cairo || echo "cairo not found (pkg-config)"
+           echo "Check key headers:"
+           ls -d /usr/include/gtk-2.0 || true
+           ls -l /usr/include/cairo || true
+           gcc -v 2>&1 | sed -n '1,40p'
 
       - name: Download and extract Harbour core v3.2.0 and Hwgui 2.23b7
         run: |
