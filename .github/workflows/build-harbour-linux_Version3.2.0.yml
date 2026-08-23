@@ -24,19 +24,26 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential autoconf automake libtool pkg-config git wget ca-certificates jq
 
-      - name: Download and extract Harbour core v3.2.0
+      - name: Download and extract Harbour core v3.2.0 and Hwgui 2.23b7
         run: |
           set -euo pipefail
           pwd
           wget https://github.com/harbour/core/releases/download/v3.2.0/harbour-3.2.0.src.tar.gz
+          wget https://www.kresin.ru/down/hwgui-2.23-b7.src.zip
           pwd
           # 直接解压到 harbour-src
           mkdir -p harbour-src
           tar -xzf harbour-3.2.0.src.tar.gz -C harbour-src
+          mkdir -p hwgui-src
+          tar -xzf hwgui-2.23-b7.src.zip -C hwgui-src
 
           # 存入 GitHub 全局环境变量，供后面的步骤引用[cite: 1]
+          HB_SRC_DIR=$PWD/harbour-src
+          HWGUI_SRC_DIR=$PWD/hwgui-src
           echo "HB_SRC_DIR=$PWD/harbour-src" >> $GITHUB_ENV
+          echo "HWGUI_SRC_DIR=$PWD/hwgui-src" >> $GITHUB_ENV
           ls -la "$HB_SRC_DIR"
+          ls -la "$HWGUI_SRC_DIR"
 
       - name: Build (capture log)
         run: |
