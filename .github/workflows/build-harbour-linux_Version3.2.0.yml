@@ -52,7 +52,7 @@ jobs:
           # 即使 make 失败也继续，方便后续收集日志[cite: 1]
           make -j"$(nproc)" 2>&1 | tee build.log || true
           cd "${{ env.HWGUI_SRC_DIR }}"
-          $HB_SRC_DIR/install/bin/hbmk2 hwgui.hbp procmisc.hbp hbxml.hbp hwgdebug.hbp
+          $HB_SRC_DIR/install/bin/linux/gcc/hbmk2 hwgui.hbp procmisc.hbp hbxml.hbp hwgdebug.hbp
 
       - name: Install into local prefix
         run: |
