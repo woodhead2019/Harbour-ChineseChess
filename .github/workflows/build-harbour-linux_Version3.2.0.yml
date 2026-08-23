@@ -3,7 +3,7 @@ name: Build Harbour (Linux) - Stable Version
 on:
   workflow_dispatch:  # 允许手动触发
   push:
-    branches: [ main, master ]
+#    branches: [ main, master ]
     tags:
       - 'v*'          # 推送以 v 开头的 tag 时会同时触发发布步骤
 
@@ -35,13 +35,13 @@ jobs:
           mkdir -p harbour-src
           tar -xzf harbour-3.2.0.src.tar.gz -C harbour-src
           mkdir -p hwgui-src
-          tar -xzf hwgui-2.23-b7.src.zip -C hwgui-src
+          unzip  hwgui-2.23-b7.src.zip -d hwgui-src
 
           # 存入 GitHub 全局环境变量，供后面的步骤引用[cite: 1]
           HB_SRC_DIR=$PWD/harbour-src
-          HWGUI_SRC_DIR=$PWD/hwgui-src
+          HWGUI_SRC_DIR=$PWD/hwgui-src/hwgui
           echo "HB_SRC_DIR=$PWD/harbour-src" >> $GITHUB_ENV
-          echo "HWGUI_SRC_DIR=$PWD/hwgui-src" >> $GITHUB_ENV
+          echo "HWGUI_SRC_DIR=$PWD/hwgui-src/hwgui" >> $GITHUB_ENV
           ls -la "$HB_SRC_DIR"
           ls -la "$HWGUI_SRC_DIR"
 
