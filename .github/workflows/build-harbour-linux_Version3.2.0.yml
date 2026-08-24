@@ -34,7 +34,7 @@ jobs:
              libpng-dev libjpeg-dev libtiff5-dev libgd-dev libfreeimage-dev \
              libcurl4-openssl-dev libmagic-dev unixodbc-dev ghostscript \
              libssl-dev
- 
+
       - name: Verify pkg-config and headers
         run: |
            set -euo pipefail
@@ -50,44 +50,38 @@ jobs:
       - name: Download and extract Harbour core v3.2.0 and Hwgui 2.23b7
         run: |
           set -euo pipefail
-          pwd
           wget https://github.com/harbour/core/releases/download/v3.2.0/harbour-3.2.0.src.tar.gz
           wget https://www.kresin.ru/down/hwgui-2.23-b7.src.zip
-          pwd
-          # 直接解压到 harbour-src
+          
           mkdir -p harbour-src
           tar -xzf harbour-3.2.0.src.tar.gz -C harbour-src
           mkdir -p hwgui-src
-          unzip  hwgui-2.23-b7.src.zip -d hwgui-src
+          unzip hwgui-2.23-b7.src.zip -d hwgui-src
 
-          # 存入 GitHub 全局环境变量，供后面的步骤引用[cite: 1]
-          HB_SRC_DIR=$PWD/harbour-src
-          HWGUI_SRC_DIR=$PWD/hwgui-src/hwgui
+          # 写入 GitHub 环境变量供后续 steps 使用
           echo "HB_SRC_DIR=$PWD/harbour-src" >> $GITHUB_ENV
           echo "HWGUI_SRC_DIR=$PWD/hwgui-src/hwgui" >> $GITHUB_ENV
-          ls -la "$HB_SRC_DIR"
-          ls -la "$HWGUI_SRC_DIR"
 
       - name: Build (capture log)
         run: |
           set -euo pipefail
-          cd "${{ env.HB_SRC_DIR }}"
-          # 即使 make 失败也继续，方便后续收集日志[cite: 1]
+          cd "$HB_SRC_DIR"
           make -j"$(nproc)" 2>&1 | tee build.log || true
-          cd "${{ env.HWGUI_SRC_DIR }}"
-          $HB_SRC_DIR/bin/linux/gcc/hbmk2 hwgui.hbp procmisc.hbp hbxml.hbp hwgdebug.hbp
+          
+          cd "$HWGUI_SRC_DIR"
+          "$HB_SRC_DIR/bin/linux/gcc/hbmk2" hwgui.hbp procmisc.hbp hbxml.hbp hwgdebug.hbp
           ls -la ./lib
 
       - name: Install into local prefix
         run: |
           set -euo pipefail
-          cd "${{ env.HB_SRC_DIR }}"
+          cd "$HB_SRC_DIR"
           make install DESTDIR=$PWD/install || true
 
-      - name: Populate /opt/harbour directory structure
+      - name: Populate /opt/harbour and /opt/hwgui directory structure
         run: |
           set -euo pipefail
-          INSTALL_DIR="${{ env.HB_SRC_DIR }}/install"
+          INSTALL_DIR="$HB_SRC_DIR/install"
 
           sudo mkdir -p ${HARBOUR_ROOT}/bin/linux/gcc
           sudo mkdir -p ${HARBOUR_ROOT}/include
@@ -105,27 +99,24 @@ jobs:
             sudo cp -r "$INSTALL_DIR/lib/"* ${HARBOUR_ROOT}/lib/linux/gcc/
           fi
 
-          echo "=== /opt/harbour structure ==="
-          find ${HARBOUR_ROOT} -type f | sort
-
           sudo mkdir -p ${HWGUI_ROOT}/include
           sudo mkdir -p ${HWGUI_ROOT}/lib/linux/gcc
-          cd "${{ env.HWGUI_SRC_DIR }}"
-          if [ -d "${{ env.HWGUI_SRC_DIR }}/include" ]; then
-            sudo cp -r "${{ env.HWGUI_SRC_DIR }}/include/*" ${HWGUI_ROOT}/include
+
+          if [ -d "$HWGUI_SRC_DIR/include" ]; then
+            sudo cp -r "$HWGUI_SRC_DIR/include/"* ${HWGUI_ROOT}/include/
           fi
-          if [ -d "${{ env.HWGUI_SRC_DIR }}/lib" ]; then
-            sudo cp -r "${{ env.HWGUI_SRC_DIR }}/lib/*.a" ${HWGUI_ROOT}/lib/linux/gcc
+          if [ -d "$HWGUI_SRC_DIR/lib" ]; then
+            sudo cp -r "$HWGUI_SRC_DIR/lib/"*.a ${HWGUI_ROOT}/lib/linux/gcc/ || true
           fi
 
-      - name: Package build outputs
+          echo "=== /opt directory structure ==="
+          find /opt -type f | sort
+
+      - name: Package build outputs (/opt)
         run: |
           set -euo pipefail
-          if [ -d "${{ env.HB_SRC_DIR }}/install" ]; then
-            tar -czf harbour-linux-build.tar.gz -C "${{ env.HB_SRC_DIR }}" install
-          else
-            tar -czf harbour-linux-build.tar.gz "${{ env.HB_SRC_DIR }}/build.log" || tar -czf harbour-linux-build.tar.gz "${{ env.HB_SRC_DIR }}"
-          fi
+          # 直接将 /opt/harbour 和 /opt/hwgui 打包
+          sudo tar -czf harbour-linux-build.tar.gz -C /opt harbour hwgui
           ls -lh harbour-linux-build.tar.gz
 
       - name: Upload artifact (build)
@@ -139,7 +130,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: harbour-build-log
-          path: ${{ env.HB_SRC_DIR }}/build.log
+          path: harbour-src/build.log
 
       - name: Create GitHub release and upload asset (only for tag pushes)
         if: startsWith(github.ref, 'refs/tags/')
@@ -171,3 +162,4 @@ jobs:
             "${upload_url}?name=harbour-linux-build.tar.gz"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
