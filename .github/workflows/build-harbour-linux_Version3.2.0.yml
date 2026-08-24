@@ -110,7 +110,7 @@ jobs:
 
           sudo mkdir -p ${HWGUI_ROOT}/include
           sudo mkdir -p ${HWGUI_ROOT}/lib/linux/gcc
-#          cd "${{ env.HWGUI_SRC_DIR }}"
+          cd "${{ env.HWGUI_SRC_DIR }}"
           if [ -d "${{ env.HWGUI_SRC_DIR }}/include" ]; then
             sudo cp -r "${{ env.HWGUI_SRC_DIR }}/include/*" ${HWGUI_ROOT}/include
           fi
