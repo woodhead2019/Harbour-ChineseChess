@@ -3,7 +3,7 @@ name: Build Harbour (Linux) - Stable Version
 on:
   workflow_dispatch:  # 允许手动触发
   push:
-#    branches: [ main, master ]
+    branches: [ main, master ]
     tags:
       - 'v*'          # 推送以 v 开头的 tag 时会同时触发发布步骤
 
