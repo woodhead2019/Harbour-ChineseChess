@@ -7,6 +7,11 @@ on:
     tags:
       - 'v*'          # 推送以 v 开头的 tag 时会同时触发发布步骤
 
+env:
+  HARBOUR_ROOT: /opt/harbour
+  HB_VERSION: "3.2.0"
+  HWGUI_ROOT: /opt/hwgui
+
 jobs:
   build:
     name: Download → Build → Package → (Optional) Release
@@ -78,6 +83,40 @@ jobs:
           set -euo pipefail
           cd "${{ env.HB_SRC_DIR }}"
           make install DESTDIR=$PWD/install || true
+
+      - name: Populate /opt/harbour directory structure
+        run: |
+          set -euo pipefail
+          INSTALL_DIR="${{ env.HB_SRC_DIR }}/install"
+
+          sudo mkdir -p ${HARBOUR_ROOT}/bin/linux/gcc
+          sudo mkdir -p ${HARBOUR_ROOT}/include
+          sudo mkdir -p ${HARBOUR_ROOT}/lib/linux/gcc
+
+          if [ -d "$INSTALL_DIR/bin" ]; then
+            sudo cp -r "$INSTALL_DIR/bin/"* ${HARBOUR_ROOT}/bin/linux/gcc/
+          fi
+
+          if [ -d "$INSTALL_DIR/include" ]; then
+            sudo cp -r "$INSTALL_DIR/include/"* ${HARBOUR_ROOT}/include/
+          fi
+
+          if [ -d "$INSTALL_DIR/lib" ]; then
+            sudo cp -r "$INSTALL_DIR/lib/"* ${HARBOUR_ROOT}/lib/linux/gcc/
+          fi
+
+          echo "=== /opt/harbour structure ==="
+          find ${HARBOUR_ROOT} -type f | sort
+
+          sudo mkdir -p ${HWGUI_ROOT}/include
+          sudo mkdir -p ${HWGUI_ROOT}/lib/linux/gcc
+#          cd "${{ env.HWGUI_SRC_DIR }}"
+          if [ -d "${{ env.HWGUI_SRC_DIR }}/include" ]; then
+            sudo cp -r "${{ env.HWGUI_SRC_DIR }}/include/*" ${HWGUI_ROOT}/include
+          fi
+          if [ -d "${{ env.HWGUI_SRC_DIR }}/lib" ]; then
+            sudo cp -r "${{ env.HWGUI_SRC_DIR }}/lib/*.a" ${HWGUI_ROOT}/lib/linux/gcc
+          fi
 
       - name: Package build outputs
         run: |

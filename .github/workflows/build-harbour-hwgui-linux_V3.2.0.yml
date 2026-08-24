@@ -3,7 +3,7 @@ name: Build Harbour+Hwgui (Linux) - Stable Version
 on:
   workflow_dispatch:
   push:
-    branches: [main, master]
+#    branches: [main, master]
     tags:
       - 'v*'
 
