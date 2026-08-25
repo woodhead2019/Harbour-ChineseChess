@@ -110,7 +110,7 @@ jobs:
           fi
 
           cd /home/runner/work/Harbour-ChineseChess/Harbour-ChineseChess
-          ./build.sh
+          ./build.sh gui linux
           sudo cp xq /opt/hwgui
 
           echo "=== /opt directory structure ==="
