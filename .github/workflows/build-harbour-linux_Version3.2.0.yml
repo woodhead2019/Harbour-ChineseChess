@@ -109,6 +109,10 @@ jobs:
             sudo cp -r "$HWGUI_SRC_DIR/lib/"*.a ${HWGUI_ROOT}/lib/linux/gcc/ || true
           fi
 
+          cd /home/runner/work/Harbour-ChineseChess/Harbour-ChineseChess
+          ./build.sh
+          sudo cp xq /opt/hwgui
+
           echo "=== /opt directory structure ==="
           find /opt -maxdepth 1 -type d | sort
 
@@ -118,9 +122,6 @@ jobs:
           # 直接将 /opt/harbour 和 /opt/hwgui 打包
           sudo tar -czf harbour-linux-build.tar.gz -C /opt harbour hwgui
           ls -lh harbour-linux-build.tar.gz
-          cd
-          pwd
-          ./build.sh
 
       - name: Upload artifact (build)
         uses: actions/upload-artifact@v4
